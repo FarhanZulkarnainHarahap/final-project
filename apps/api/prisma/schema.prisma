@@ -115,7 +115,6 @@ model Product {
   name        String    @unique
   userId      String
   description String
-  stock       Int
   price       Float
   weight      Float
   createdAt   DateTime  @default(now())

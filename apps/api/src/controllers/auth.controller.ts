@@ -224,7 +224,7 @@ export async function sendVerificationEmail(req: Request, res: Response) {
 
     // Kirim email dengan Resend
     const { error: sendError } = await resend.emails.send({
-      from: "onboarding@resend.dev",
+      from: "MarketSnap <cs@resend.dev>",
       to: user.email,
       subject: "Verifikasi Email MarketSnap",
       html: htmlContent,
@@ -318,7 +318,7 @@ export async function VerifySuccess(req: Request, res: Response) {
 
       // Kirim email menggunakan hasil template
       const { error: sendError } = await resend.emails.send({
-        from: "onboarding@resend.dev",
+        from: "MarketSnap <cs@resend.dev>",
         to: user.email,
         subject: "Verifikasi Email Berhasil",
         html: htmlTemplate,
@@ -469,7 +469,7 @@ export async function resendSetPasswordLink(req: Request, res: Response) {
 
     // Send the email using Resend
     const { error: sendError } = await resend.emails.send({
-      from: "onboarding@resend.dev", // Sender email address
+      from: "MarketSnap <cs@resend.dev>", // Sender email address
       to: user.email,
       subject: "Reset Your Password",
       html: html, // The HTML content of the email

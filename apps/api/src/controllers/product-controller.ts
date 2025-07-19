@@ -8,12 +8,13 @@ import { CustomJwtPayload } from "../types/express.js";
 export async function getAllProduct(req: Request, res: Response) {
   try {
     const search = req.query.search as string | undefined;
+
     const products = await prisma.product.findMany({
       where: search
         ? {
             name: {
               contains: search,
-              mode: "insensitive", // biar case insensitive
+              mode: "insensitive", // agar pencarian tidak case sensitive
             },
           }
         : undefined,
@@ -22,7 +23,7 @@ export async function getAllProduct(req: Request, res: Response) {
         User: true,
         imageContent: true,
         imagePreview: true,
-        StoreProduct: true,
+        StoreProduct: true, // ambil data stok dari sini
       },
     });
 
@@ -30,21 +31,22 @@ export async function getAllProduct(req: Request, res: Response) {
       return {
         id: item.id,
         name: item.name,
-        decription: item.description,
+        description: item.description,
         price: item.price,
-        stock: item.stock,
+        stock: item.StoreProduct.reduce(
+          (total, storeProd) => total + storeProd.stock,
+          0
+        ),
         imagePreview: item.imagePreview,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
-        category: item.ProductCategory.map(
-          (el: { Category: { name: string } }) => el.Category.name
-        ),
+        category: item.ProductCategory.map((el) => el.Category.name),
       };
     });
 
     res.status(200).json({ data: finalResult });
   } catch (error) {
-    console.error(error);
+    console.error("Error while getting all products:", error);
     res.status(500).json({ message: "Failed to get all products data" });
   }
 }
@@ -147,7 +149,6 @@ export async function createProduct(
         description,
         price,
         weight,
-        stock,
         ProductCategory: {
           create: categoryIds.map((categoryId: string) => ({
             categoryId,
