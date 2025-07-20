@@ -1,85 +1,39 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 interface CartItem {
-  id: string;
+  id: number;
+  title: string;
+  image: string;
+  price: number;
   quantity: number;
-  unitPrice: number;
-  Product: {
-    title: string;
-    image: string;
-    price: number;
-  };
 }
+
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const router = useRouter();
-  useEffect(() => {
-    async function fetchCart() {
-      try {
-        const res = await fetch("http://localhost:8000/api/v1/cart/index", {
-          credentials: "include", // important if you're using cookies
-          // headers: {
-          //   "Content-Type": "application/json",
-          // },
-        });
+  const [cartItems, setCartItems] = useState<CartItem[]>([
+    {
+      id: 1,
+      title: "Item 1",
+      image: "/image-of-product.png",
+      price: 150.0,
+      quantity: 1,
+    },
+  ]);
 
-        //check for unauthorized
-        if (res.status === 401 || res.status === 403) {
-          router.push("/auth/login"); // ⬅️ redirect to login page
-          return;
-        }
-
-        const json = await res.json();
-        if (res.ok) {
-          setCartItems(json.data);
-        } else {
-          console.error("Failed to load cart", json.message);
-        }
-      } catch (err) {
-        console.error("Error fetching cart:", err);
-      }
-    }
-
-    fetchCart();
-  }, [router]);
-
-  const updateQuantity = async (id: string, quantity: number) => {
+  const updateQuantity = (id: number, quantity: number) => {
     setCartItems((items) =>
       items.map((item) => (item.id === id ? { ...item, quantity } : item))
     );
-
-    try {
-      await fetch(`http://localhost:8000/api/v1/cart/${id}`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ quantity }),
-      });
-    } catch (err) {
-      console.error("Failed to update quantity", err);
-    }
   };
 
-  const removeItem = async (id: string) => {
+  const removeItem = (id: number) => {
     setCartItems((items) => items.filter((item) => item.id !== id));
-
-    try {
-      await fetch(`http://localhost:8000/api/v1/cart/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-    } catch (err) {
-      console.error("Failed to remove item", err);
-    }
   };
 
   const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.Product.price * item.quantity,
+    (sum, item) => sum + item.price * item.quantity,
     0
   );
 
@@ -112,21 +66,15 @@ export default function CartPage() {
                 </td>
                 <td className="p-2 flex items-center gap-2">
                   <Image
-                    src={item.Product.image}
-                    alt={item.Product.title}
+                    src={item.image}
+                    alt={item.title}
                     width={60}
                     height={60}
                     className="rounded"
                   />
-                  <span>{item.Product.title}</span>
+                  <span>{item.title}</span>
                 </td>
-                <td className="p-2">
-                  Rp.{" "}
-                  {item.Product.price.toLocaleString("id-ID", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </td>
+                <td className="p-2">${item.price.toFixed(2)}</td>
                 <td className="p-2">
                   <input
                     type="number"
@@ -139,11 +87,7 @@ export default function CartPage() {
                   />
                 </td>
                 <td className="p-2">
-                  Rp.{" "}
-                  {(item.Product.price * item.quantity).toLocaleString(
-                    "id-ID",
-                    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                  )}
+                  ${(item.price * item.quantity).toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -152,7 +96,7 @@ export default function CartPage() {
       </div>
 
       {/* Coupon and Update */}
-      {/* <div className="flex flex-col sm:flex-row gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <div className="flex flex-1 gap-2">
           <input
             placeholder="Coupon code"
@@ -165,35 +109,20 @@ export default function CartPage() {
         <button className="bg-gray-200 text-black px-4 py-2 rounded">
           Update cart
         </button>
-      </div> */}
+      </div>
 
       {/* Cart Totals */}
       <div className="bg-gray-100 p-4 rounded w-full sm:w-96 ml-auto">
         <h2 className="text-xl font-semibold mb-4 text-center">Cart Totals</h2>
         <div className="flex justify-between mb-2 border-b pb-2">
           <span>Subtotal</span>
-          <span>
-            Rp.{" "}
-            {subtotal.toLocaleString("id-ID", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </span>
+          <span>${subtotal.toFixed(2)}</span>
         </div>
         <div className="flex justify-between mb-4">
           <span>Total</span>
-          <span>
-            Rp.{" "}
-            {subtotal.toLocaleString("id-ID", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </span>
+          <span>${subtotal.toFixed(2)}</span>
         </div>
-        <button
-          onClick={() => router.push("/checkout")}
-          className="bg-green-600 w-full text-white py-2 rounded"
-        >
+        <button className="bg-green-600 w-full text-white py-2 rounded">
           Proceed to checkout
         </button>
       </div>

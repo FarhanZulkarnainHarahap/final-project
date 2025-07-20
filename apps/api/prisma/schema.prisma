@@ -44,121 +44,94 @@ model User {
   provider            String?
   resetToken          String?
   resetTokenExpiresAt DateTime?
-  isVerified          Boolean   @default(false) // Status verifikasi, default false
+  isVerified          Boolean?  @default(false) // Status verifikasi, default false
   verificationToken   String? // Token verifikasi
 
-  Store            Store[]
+  addresses Address[] // Relasi satu ke banyak dengan Address
+
   DiscountUsage    DiscountUsage[]
   InventoryJournal InventoryJournal[]
   Cart             Cart[]
   Order            Order[]
   Product          Product[]
-  UserAddress      UserAddress[]
-  StoreUser        StoreUser[]
-}
 
-model UserAddress {
-  id        String  @id @default(uuid())
-  userId    String
-  recipient String
-  isPrimary Boolean @default(false)
+  // Relasi: stores yang dibuat user ini sebagai SUPER_ADMIN
+  storesCreated Store[] @relation("StoreCreatedBy")
 
-  User    User      @relation(fields: [userId], references: [id])
-  Address Address[]
+  // Relasi: stores yang dimiliki user ini sebagai STORE_ADMIN
+  storesOwned Store[] @relation("StoreOwnedBy")
 }
 
 model Address {
-  id             String   @id @default(uuid())
-  userAddressId  String?
-  storeAddressId String?
-  destination    String
-  address        String
-  city           String
-  province       String
-  postalCode     String
-  createdAt      DateTime @default(now())
+  id        String  @id @default(uuid())
+  userId    String?
+  recipient String
+  address   String
 
-  StoreAddress StoreAddress? @relation(fields: [storeAddressId], references: [id])
-  UserAddress  UserAddress?  @relation(fields: [userAddressId], references: [id])
-  Order        Order[]
-}
+  city       String
+  province   String
+  postalCode String
+  storeId    String?
+  isPrimary  Boolean  @default(false) // <--- ini dia
+  createdAt  DateTime @default(now())
 
-model StoreUser {
-  id        String   @id @default(uuid())
-  storeId   String?
-  userId    String
-  createdAt DateTime @default(now())
-
-  Store Store? @relation(fields: [storeId], references: [id])
-  User  User   @relation(fields: [userId], references: [id])
-}
-
-model StoreAddress {
-  id         String @id @default(uuid())
-  storeId    String
-  latitude   Float
-  longtitude Float
-
-  createdAt DateTime @default(now())
-
-  Address Address[]
-  Store   Store     @relation(fields: [storeId], references: [id])
+  Order Order[]
+  user  User?   @relation(fields: [userId], references: [id]) // Relasi ke User
+  store Store?  @relation(fields: [storeId], references: [id]) // Relasi ke Store, opsional
 }
 
 model Store {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  userId    String?
-  // Added: longitude for geographical location
+  id   String @id @default(uuid())
+  name String @unique
+
+  // userId = siapa yang membuat (SUPER_ADMIN)
+  userId String
+
+  // owner = pemilik toko (STORE_ADMIN)
+  owner String
+
+  address    String
+  city       String
+  province   String
+  postalCode String
+
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
-  distance  Float?
 
-  User User? @relation(fields: [userId], references: [id])
+  // Relasi: siapa pemilik toko
 
-  Discounts    Discount[]
-  Inventory    InventoryJournal[]
-  StoreProduct StoreProduct[]
-  StoreAddress StoreAddress[]
-  StoreUser    StoreUser[]
+  Discount         Discount[]
+  InventoryJournal InventoryJournal[]
+  Product          Product[]
+  ProductInventory ProductInventory[]
+  Address          Address[]
+
+  createdBy User @relation("StoreCreatedBy", fields: [userId], references: [id])
+  ownedBy   User @relation("StoreOwnedBy", fields: [owner], references: [id])
 }
 
 model Product {
   id          String    @id @default(uuid())
   name        String    @unique
+  storeId     String
   userId      String
   description String
+  stock       Int
   price       Float
   weight      Float
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
-  User User @relation(fields: [userId], references: [id])
-
+  User             User               @relation(fields: [userId], references: [id])
+  Store            Store              @relation(fields: [storeId], references: [id])
   ProductCategory  ProductCategory[]
+  ProductImage     ProductImage[]
   Discount         Discount[]
   InventoryJournal InventoryJournal[]
   CartItem         CartItem[]
   OrderItem        OrderItem[]
-  StoreProduct     StoreProduct[]
-  Image            Image[]
-  imagePreview     Image[]            @relation("imagePreview")
-  imageContent     Image[]            @relation("imageContent")
-}
-
-model StoreProduct {
-  productId String
-  storeId   String
-  stock     Int
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  Product Product @relation(fields: [productId], references: [id])
-  Store   Store   @relation(fields: [storeId], references: [id])
-
-  @@id([productId, storeId])
+  ProductInventory ProductInventory[]
 }
 
 model Category {
@@ -173,17 +146,12 @@ model Category {
 }
 
 model Image {
-  id               String   @id @default(uuid())
-  imageUrl         String
-  previewProductId String?
-  contentProductId String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id        String    @id @default(uuid())
+  imageUrl  String
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
 
-  previewProduct Product? @relation("imagePreview", fields: [previewProductId], references: [id])
-  contentProduct Product? @relation("imageContent", fields: [contentProductId], references: [id])
-  Product        Product? @relation(fields: [ProductId], references: [id])
-  ProductId      String?
+  ProductImage ProductImage[]
 }
 
 model ProductCategory {
@@ -194,6 +162,16 @@ model ProductCategory {
 
   Product  Product  @relation(fields: [productId], references: [id])
   Category Category @relation(fields: [categoryId], references: [id])
+}
+
+model ProductImage {
+  id        String    @id @default(uuid())
+  productId String
+  imageId   String
+  deletedAt DateTime?
+
+  Product Product @relation(fields: [productId], references: [id])
+  Image   Image   @relation(fields: [imageId], references: [id])
 }
 
 model Discount {
@@ -224,6 +202,20 @@ model DiscountUsage {
 
   User     User     @relation(fields: [userId], references: [id])
   Discount Discount @relation(fields: [discountId], references: [id])
+}
+
+model ProductInventory {
+  id        String    @id @default(uuid())
+  userId    String
+  storeId   String
+  productId String
+  stock     Int
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+  updatedAt DateTime  @updatedAt
+
+  Product Product @relation(fields: [productId], references: [id])
+  Store   Store   @relation(fields: [storeId], references: [id])
 }
 
 model InventoryJournal {

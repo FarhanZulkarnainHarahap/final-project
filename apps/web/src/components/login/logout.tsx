@@ -1,10 +1,8 @@
 "use client";
 
 import { FiLogOut } from "react-icons/fi";
-import { useRouter } from "next/navigation";
 
 export default function SignOut() {
-  const router = useRouter();
   async function handleClick() {
     try {
       await fetch("http://localhost:8000/api/v1/auth/logout", {
@@ -16,7 +14,6 @@ export default function SignOut() {
       window.location.href = "/";
       // atau jika kamu ingin reload tanpa pindah halaman:
       // window.location.reload();
-      router.push("/");
     } catch (error) {
       console.error("Error logging out:", error);
     }

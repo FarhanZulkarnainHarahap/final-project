@@ -7,18 +7,8 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  description: string;
-  weight: number;
-  stock: number;
 }
-interface StoreProduct {
-  productId: string;
-  storeId: string;
-  stock: number;
-  createdAt: string;
-  updatedAt: string;
-  Product: Product;
-}
+
 interface Store {
   id: string;
   name: string;
@@ -26,7 +16,7 @@ interface Store {
   city: string;
   province: string;
   postalCode: string;
-  StoreProduct: StoreProduct[];
+  products?: Product[];
 }
 
 export default function StoreDetailPage({
@@ -40,7 +30,7 @@ export default function StoreDetailPage({
   useEffect(() => {
     async function getStoreById() {
       try {
-        const { storeId } = params;
+        const { storeId } = await params;
         const res = await fetch(
           `http://localhost:8000/api/v1/stores/${storeId}`,
           {
@@ -56,7 +46,7 @@ export default function StoreDetailPage({
       }
     }
     getStoreById();
-  }, [params]);
+  });
 
   if (loading) return <p className="p-4">Loading...</p>;
 
@@ -73,16 +63,21 @@ export default function StoreDetailPage({
       <AddProductPage params={{ storeId: store.id }} />
 
       <h2 className="text-xl font-semibold mb-2">Products</h2>
-      <ul>
-        {store.StoreProduct.map((storeProduct) => (
-          <li key={storeProduct.productId} className="mb-4">
-            <h3 className="text-lg font-medium">{storeProduct.Product.name}</h3>
-            <p className="text-gray-700">{storeProduct.Product.description}</p>
-            <p>Price: ${storeProduct.Product.price}</p>
-            <p>Weight: {storeProduct.Product.weight} kg</p>
-          </li>
-        ))}
-      </ul>
+      {store.products && store.products.length > 0 ? (
+        <ul className="space-y-2">
+          {store.products.map((product) => (
+            <li
+              key={product.id}
+              className="border border-gray-300 rounded p-3 flex justify-between"
+            >
+              <span>{product.name}</span>
+              <span>${product.price}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-gray-500">No products found.</p>
+      )}
     </section>
   );
 }

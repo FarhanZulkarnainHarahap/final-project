@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { CustomJwtPayload } from "../types/express.js";
 import prisma from "../config/prisma-client.js";
 import { ZodError } from "zod";
 import { Resend } from "resend";
@@ -131,14 +130,12 @@ export async function login(req: Request, res: Response) {
       },
       process.env.JWT_SECRET as string
     );
-    if (!JWTToken) {
-      res.status(404).json({ message: "Invalid credentials" });
-      return;
-    }
+
     res
       .cookie("accessToken", JWTToken, { httpOnly: true })
       .status(200)
-      .json({ message: "Login success" });
+      .json({ message: "Login success" })
+      .redirect("http://localhost:3000");
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Login failed" });
@@ -152,7 +149,8 @@ export async function logout(_req: Request, res: Response) {
       .json({ message: "Logout success" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to logout" }).redirect("/");
+    res.status(500).json({ message: "Failed to logout" });
+    res.redirect("/");
   }
 }
 
@@ -221,7 +219,8 @@ export async function VerifySuccess(req: Request, res: Response) {
 
     res
       .status(200)
-      .json({ message: "Email verified successfully", data: decoded });
+      .json({ message: "Email verified successfully", data: decoded })
+      .redirect("http://localhost:3000");
   } catch (error) {
     // Jika token tidak valid, tampilkan pesan error
     console.error(error);
@@ -300,40 +299,8 @@ export async function loginGoogle(req: Request, res: Response) {
     res
       .cookie("accessToken", accesstoken, { httpOnly: true })
       .redirect("http://localhost:3000");
-
-    return;
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to Login", error });
-  }
-}
-
-export async function getProfile(req: Request, res: Response) {
-  try {
-    const user = req.user as CustomJwtPayload;
-
-    const userWithStore = await prisma.user.findUnique({
-      where: { id: user.id },
-      include: {
-        Store: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    if (!userWithStore) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
-
-    res.status(200).json({
-      user: userWithStore,
-    });
-  } catch (error) {
-    console.error("Get Profile Error:", error);
-    res.status(500).json({ message: "Error fetching profile" });
   }
 }

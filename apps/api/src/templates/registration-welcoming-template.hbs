@@ -1,79 +1,67 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Complete Your Registration</title>
+    <title>Welcome to Maket Snap</title>
     <style>
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #14532d; /* Tailwind green-900 */
+        background-color: #000000;
         margin: 0;
         padding: 0;
       }
-
       .container {
         max-width: 600px;
-        margin: 50px auto;
+        margin: 40px auto;
         background-color: #ffffff;
-        padding: 40px;
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
       }
-
-      h2 {
-        color: #14532d;
+      h1 {
+        color: #333;
         font-size: 24px;
-        margin-bottom: 20px;
       }
-
       p {
         font-size: 16px;
-        color: #444;
+        color: #555;
         line-height: 1.6;
       }
-
       .btn {
         display: inline-block;
-        margin-top: 30px;
+        margin-top: 20px;
         padding: 12px 24px;
-        background-color: #14532d;
-        color: white !important;
+        background-color: #4a90e2;
+        color: white;
         text-decoration: none;
-        border-radius: 8px;
+        border-radius: 6px;
         font-weight: bold;
       }
-
       .footer {
-        margin-top: 40px;
-        font-size: 12px;
-        color: #cccccc;
         text-align: center;
+        font-size: 12px;
+        color: #aaa;
+        margin-top: 30px;
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <h2>Hello, {{customerName}} 👋</h2>
-      <p>
-        Welcome to
-        <strong>{{companyName}}</strong>! You’re almost ready to start using
-        your account.
-      </p>
-      <p>
-        Please click the button below to create your password and complete your
-        registration:
-      </p>
+      <h1>Hello, {{customerName}} 👋</h1>
+      <p>Welcome to
+        <strong>Maket Snap</strong>! We're thrilled to have you on board.</p>
+      <p>To get started, please verify your email address by clicking the button
+        below:</p>
       <a
         class="btn"
-        href="http://localhost:3000/auth/set-password?token={{token}}"
-        target="_blank"
+        href="http://localhost:8000/api/v1/auth/verify-email?token={{token}}"
       >
-        Create Your Password
+        Verify Email Address
       </a>
-      <p>If you didn’t create this account, please ignore this email.</p>
+      <p>If you didn’t create an account with us, please ignore this email.</p>
       <div class="footer">
         &copy;
         {{currentYear}}
-        {{companyName}}. All rights reserved.
+        Maket Snap. All rights reserved.
       </div>
     </div>
   </body>

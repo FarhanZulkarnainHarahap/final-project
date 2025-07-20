@@ -12,107 +12,13 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 /* -------------------------------------------------------------------------- */
 /*                                GET ALL USER                                */
 /* -------------------------------------------------------------------------- */
-export async function getAllUser(req: Request, res: Response) {
+export async function getAllUser(_req: Request, res: Response) {
   try {
-    // Ambil query parameters
-    const {
-      page = "1",
-      limit = "10",
-      sortBy = "createdAt",
-      sortOrder = "desc",
-      search = "",
-      role = "",
-    } = req.query;
-
-    // Convert string ke number untuk pagination
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = parseInt(limit as string, 10);
-    const skip = (pageNum - 1) * limitNum;
-
-    // Validasi sortBy untuk mencegah injection
-    const allowedSortFields = [
-      "id",
-      "username",
-      "email",
-      "firstName",
-      "lastName",
-      "role",
-      "createdAt",
-    ];
-    const validSortBy = allowedSortFields.includes(sortBy as string)
-      ? (sortBy as string)
-      : "createdAt";
-    const validSortOrder = sortOrder === "asc" ? "asc" : "desc";
-
-    // Build where clause untuk filtering
-    const whereClause: any = {};
-
-    // Search filter (mencari di multiple fields)
-    if (search) {
-      whereClause.OR = [
-        { username: { contains: search as string, mode: "insensitive" } },
-        { email: { contains: search as string, mode: "insensitive" } },
-        { firstName: { contains: search as string, mode: "insensitive" } },
-        { lastName: { contains: search as string, mode: "insensitive" } },
-      ];
-    }
-
-    // Role filter
-    if (role && role !== "") {
-      whereClause.role = role as Role;
-    }
-    // Get total count untuk pagination info
-    const totalUsers = await prisma.user.count({
-      where: whereClause,
-    });
-
-    // Get users with pagination, filtering, and sorting
-    const users = await prisma.user.findMany({
-      where: whereClause,
-      orderBy: {
-        [validSortBy]: validSortOrder,
-      },
-      skip: skip,
-      take: limitNum,
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        phoneNumber: true,
-        role: true,
-        createdAt: true,
-      },
-    });
-
-    // Calculate pagination info
-    const totalPages = Math.ceil(totalUsers / limitNum);
-    const hasNextPage = pageNum < totalPages;
-    const hasPrevPage = pageNum > 1;
-
-    // Response dengan metadata pagination
-    res.status(200).json({
-      message: "Get All users success",
-      data: users,
-      pagination: {
-        currentPage: pageNum,
-        totalPages: totalPages,
-        totalUsers: totalUsers,
-        usersPerPage: limitNum,
-        hasNextPage: hasNextPage,
-        hasPrevPage: hasPrevPage,
-      },
-      filters: {
-        search: search || null,
-        role: role || null,
-        sortBy: validSortBy,
-        sortOrder: validSortOrder,
-      },
-    });
+    const user = await prisma.user.findMany();
+    res.status(200).json({ message: "Get All user success", data: user });
   } catch (error) {
     console.error("get All User Error:", error);
-    res.status(500).json({ message: "Failed to get users" });
+    res.status(500).json({ message: "Failed to get address" });
   }
 }
 /* -------------------------------------------------------------------------- */
@@ -161,7 +67,7 @@ export async function updateCurrentUser(req: Request, res: Response) {
     }
 
     // Get the data from the request body that the user wants to update
-    const { email, firstName, lastName, phoneNumber, role } = req.body;
+    const { email, firstName, lastName, phoneNumber } = req.body;
 
     // Validate if the data is present in the request body
     if (!email && !firstName && !lastName && !phoneNumber) {
@@ -176,7 +82,6 @@ export async function updateCurrentUser(req: Request, res: Response) {
         firstName, // Update first name
         lastName, // Update last name
         phoneNumber, // Update phone number
-        role,
       },
     });
 
@@ -318,7 +223,7 @@ export async function changePassword(
   try {
     const { oldPassword, newPassword } = req.body;
     const user = req.user as CustomJwtPayload;
-    const userId = user.id; // Diambil dari auth middleware
+    const userId = user.ud; // Diambil dari auth middleware
 
     if (!oldPassword || !newPassword) {
       res

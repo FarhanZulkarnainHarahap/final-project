@@ -20,7 +20,7 @@ export default function ProductCatalogId({
       try {
         const { productId } = await params;
         const res = await fetch(
-          `http://localhost:8000/api/v1/products/${productId}`, //env domain/api....
+          `http://localhost:8000/api/v1/products/${productId}`,
           {
             credentials: "include",
           }
@@ -61,6 +61,9 @@ export default function ProductCatalogId({
           <p>{products.description}</p>
           <p>Price: Rp{products.price}</p>
           <p>Stock: {products.stock}</p>
+          {/* {product.ProductImage?.[0]?.Image?.imageUrl && (
+            
+          )} */}
         </article>
       )}
     </div>
