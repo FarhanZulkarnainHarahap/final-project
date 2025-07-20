@@ -1,7 +1,8 @@
 // apps/web/app/api/auth/[...nextauth]/route.ts
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { prisma } from "@/lib/prisma";
+// import { prisma } from "@/lib/prisma";
+import { prisma } from "../../../../../lib/pirsma";
 
 export const authOptions = {
   providers: [

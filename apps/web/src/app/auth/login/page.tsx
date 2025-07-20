@@ -7,7 +7,10 @@ import { FaTwitter } from "react-icons/fa";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const [loginData, setLoginData] = useState({ username: "", password: "" });
+  const [loginData, setLoginData] = useState({
+    usernameOrEmail: "",
+    password: "",
+  });
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -21,105 +24,138 @@ export default function LoginPage() {
         credentials: "include",
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to login");
-      }
+      if (!res.ok) throw new Error("Login gagal");
 
+      const data = await res.json();
+
+      // Optional: alert login sukses
       alert("Login success");
 
-      setLoginData({ username: "", password: "" });
+      setLoginData({ usernameOrEmail: "", password: "" });
 
-      router.push("/");
-      window.location.href = "/";
+      // Redirect berdasarkan role
+      switch (data.role) {
+        case "USER":
+          router.push("/");
+          break;
+        case "STORE_ADMIN":
+          router.push("/dashboard/admin-store");
+          break;
+        case "SUPER_ADMIN":
+          router.push("/dashboard/admin");
+          break;
+        default:
+          router.push("/");
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Login error:", error);
+      alert("Login gagal. Periksa kembali email/username dan password.");
     }
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-white">
-      <div className="form-container bg-gradient-to-r from-green-900 from-10% via-green-800 via-30% to-green-600 to-90% p-8 rounded-xl shadow-lg w-full max-w-sm text-white">
-        <p className="title text-2xl font-bold mb-6 text-center">Login</p>
-        <form className="form grid gap-4" onSubmit={handleSubmit}>
-          <div className="input-group grid">
-            <label htmlFor="username">Username</label>
+    <main className="min-h-screen bg-gradient-to-br from-green-900 to-green-600 flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg animate-fade-in">
+        <h1 className="text-3xl font-bold text-green-900 text-center mb-6">
+          Login
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Username or Email
+            </label>
             <input
               type="text"
-              id="username"
-              name="username"
-              placeholder="Enter your username"
-              className="mt-1 p-2 rounded bg-transparent border border-white focus:outline-none focus:ring-2 focus:ring-gray-400"
-              value={loginData.username}
+              placeholder="Enter your username or email"
+              className="w-full mt-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-900"
+              value={loginData.usernameOrEmail}
               onChange={(e) =>
-                setLoginData({ ...loginData, username: e.target.value })
+                setLoginData({ ...loginData, usernameOrEmail: e.target.value })
               }
+              required
             />
           </div>
 
-          <div className="input-group grid">
-            <label htmlFor="password">Password</label>
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Password
+            </label>
             <input
               type="password"
-              id="password"
-              name="password"
               placeholder="Enter your password"
-              className="mt-1 p-2 rounded bg-transparent border border-white focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="w-full mt-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-900"
               value={loginData.password}
               onChange={(e) =>
                 setLoginData({ ...loginData, password: e.target.value })
               }
+              required
             />
-            <div className="forgot text-right text-sm mt-1">
-              <a
+            <div className="text-right mt-1">
+              <Link
                 href="/auth/reset-password"
-                className="text-gray-400 hover:text-white underline"
+                className="text-sm text-green-800 hover:underline"
               >
                 Forgot Password?
-              </a>
+              </Link>
             </div>
           </div>
 
           <button
             type="submit"
-            className="sign bg-white text-black font-semibold py-2 rounded hover:bg-gray-200 transition"
+            className="w-full bg-green-900 hover:bg-green-800 text-white font-semibold py-2 rounded-md transition duration-300"
           >
-            Sign in
+            Sign In
           </button>
         </form>
-        <div className="grid grid-cols-[1fr_auto] pt-3">
-          <p>saya tidak memiliki akun</p>
+
+        <p className="text-sm text-gray-600 mt-4 text-center">
+          Don't have an account?{" "}
           <Link
             href="/auth/register"
-            className="text-gray-400 hover:text-white text-right underline"
+            className="text-green-800 hover:underline"
           >
-            Daftar Sekarang
+            Register here
           </Link>
-        </div>
-        <div className="social-message flex items-center gap-2 my-6">
-          <div className="line flex-1 h-px bg-gray-500" />
-          <p className="message text-sm text-gray-400">
-            Login with social accounts
-          </p>
-          <div className="line flex-1 h-px bg-gray-500" />
+        </p>
+
+        <div className="flex items-center my-6 gap-2">
+          <div className="flex-1 h-px bg-gray-300" />
+          <span className="text-sm text-gray-500">or continue with</span>
+          <div className="flex-1 h-px bg-gray-300" />
         </div>
 
-        <div className="social-icons flex justify-center gap-4">
-          <button
-            aria-label="Log in with Google"
-            className="icon bg-white p-2 rounded-full hover:shadow-lg"
+        <div className="flex justify-center gap-4">
+          <Link
+            href="http://localhost:8000/api/v1/auth/google"
+            className="bg-white p-2 rounded-full hover:shadow-md transition"
           >
-            <Link href="http://localhost:8000/api/v1/auth/google">
-              <FcGoogle size={24} />
-            </Link>
-          </button>
+            <FcGoogle size={24} />
+          </Link>
           <button
-            aria-label="Log in with Twitter"
-            className="icon bg-white p-2 rounded-full hover:shadow-lg text-blue-500"
+            aria-label="Twitter login"
+            className="bg-white p-2 rounded-full hover:shadow-md transition text-blue-500"
           >
             <FaTwitter size={24} />
           </button>
         </div>
       </div>
+
+      <style jsx>{`
+        .animate-fade-in {
+          animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(15px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </main>
   );
 }

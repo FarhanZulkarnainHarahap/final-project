@@ -9,7 +9,14 @@ import authRouter from "./routers/auth-router.js";
 import userRouter from "./routers/user-router.js";
 import addressRouter from "./routers/address-router.js";
 import productRouter from "./routers/product-router.js";
+import cartRouter from "./routers/cart-router.js";
 import storeRouter from "./routers/store-router.js";
+import inventoryRouter from "./routers/inventory-router.js";
+import discountRouter from "./routers/discount-router.js";
+// import storeProductRouter from "./routers/storeProduct-router.js";
+import rajaOngkirRouter from "./routers/rajaongkir-router.js";
+import categoryRouter from "./routers/category-router.js"; // Ganti dengan categoryRouter jika ada
+
 import "./config/passport.js"; // konfigurasi strategi Passport (GoogleStrategy)
 
 const app: Application = express();
@@ -50,10 +57,15 @@ app.use("/api/v1/auth", authRouter);
 
 app.use("/api/v1/addresses", addressRouter);
 app.use("/api/v1/products", productRouter);
-app.use("/api/v1/stores", storeRouter); // Ganti dengan storeRouter jika ada
+app.use("/api/v1/cart", cartRouter);
+app.use("/api/v1/stores", storeRouter);
+app.use("/api/v1/inventory", inventoryRouter);
+app.use("/api/v1/discounts", discountRouter);
+
 // 🛡️ Endpoint dilindungi, bisa pakai verifyToken (JWT) atau verifyGoogleToken (session)
 app.use("/api/v1/user", userRouter);
-
+app.use("/api/v1/categories", categoryRouter);
+app.use("/api/v1/rajaongkir", rajaOngkirRouter);
 // Health check
 app.get("/api/v1/health", async (_req: Request, res: Response) => {
   res.status(200).json({ message: "API running" });

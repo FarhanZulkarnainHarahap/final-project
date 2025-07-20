@@ -10,6 +10,9 @@ export async function middleware(req: NextRequest) {
   if (pathname.startsWith("/dashboard/user/product")) {
     return NextResponse.next();
   }
+  if (pathname.startsWith("/dashboard/user/product-store")) {
+    return NextResponse.next();
+  }
   if (pathname.startsWith("/dashboard/user/best-deals")) {
     return NextResponse.next();
   }
@@ -21,7 +24,7 @@ export async function middleware(req: NextRequest) {
   }
   // Halaman checkout di dalam /dashboard/user hanya bisa diakses oleh yang sudah login
   if (pathname.startsWith("/dashboard/user/checkout") && !accessToken) {
-    return NextResponse.redirect(`${req.nextUrl.origin}/auth/login`);
+    return NextResponse.redirect("${req.nextUrl.origin}/auth/login");
   }
 
   // Tidak perlu token untuk halaman auth/login

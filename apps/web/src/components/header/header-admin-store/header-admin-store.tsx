@@ -9,10 +9,11 @@ import {
   FiLayers,
   FiShoppingCart,
   FiUsers,
-  FiSettings,
   FiHome,
 } from "react-icons/fi";
+import { MdOutlineInventory, MdDiscount } from "react-icons/md";
 import Link from "next/link";
+import SignOut from "@/components/login/logout";
 
 interface User {
   id: string;
@@ -64,13 +65,18 @@ export default function MenuNavbarStoreAdmin({
         </button>
         <div className="text-sm">
           {users ? (
-            <span>
-              Welcome,{" "}
-              <strong>
-                {users.firstName} {users.lastName}
-                {users.name}
-              </strong>
-            </span>
+            <div>
+              <span>
+                Welcome,{" "}
+                <strong>
+                  {users.firstName} {users.lastName}
+                  {users.name}
+                </strong>
+              </span>
+              <div className="text-xs text-green-200">
+                Role: <span className="font-semibold">{users.role}</span>
+              </div>
+            </div>
           ) : (
             <span>Loading user...</span>
           )}
@@ -80,7 +86,7 @@ export default function MenuNavbarStoreAdmin({
       <div className="flex flex-1">
         {/* Sidebar */}
         <div
-          className={`flex flex-col bg-green-600 text-white shadow-lg transition-all duration-300 ease-in-out ${
+          className={`flex flex-col bg-green-600 text-white shadow-lg transition-all duration-300 h-fit ease-in-out ${
             sidebarOpen ? "w-64" : "w-0"
           } overflow-hidden`}
         >
@@ -113,50 +119,64 @@ export default function MenuNavbarStoreAdmin({
           </div>
 
           {/* Menu */}
-          <nav className="p-4 space-y-2">
-            <Link
-              href="/dashboard/admin-store"
-              className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
-            >
-              <FiHome />
-              <span>Dashboard</span>
-            </Link>
-            <Link
-              href="/dashboard/admin-store/store"
-              className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
-            >
-              <FiBox />
-              <span>Store</span>
-            </Link>
-            <Link
-              href="/store/categories"
-              className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
-            >
-              <FiLayers />
-              <span>Kategori Produk</span>
-            </Link>
-            <Link
-              href="/store/orders"
-              className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
-            >
-              <FiShoppingCart />
-              <span>Pesanan</span>
-            </Link>
-            <Link
-              href="/store/customers"
-              className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
-            >
-              <FiUsers />
-              <span>Pelanggan</span>
-            </Link>
-            <Link
-              href="/store/settings"
-              className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
-            >
-              <FiSettings />
-              <span>Pengaturan</span>
-            </Link>
-          </nav>
+          <div className="flex flex-col h-[81vh] justify-between">
+            <div className="flex flex-col h-[90vh] justify-between">
+              <nav className="p-4 space-y-2">
+                <Link
+                  href="/dashboard/admin-store"
+                  className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
+                >
+                  <FiHome />
+                  <span>Dashboard</span>
+                </Link>
+                <Link
+                  href="/dashboard/admin-store/product"
+                  className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
+                >
+                  <FiBox />
+                  <span>Product</span>
+                </Link>
+                <Link
+                  href="/dashboard/admin-store/category"
+                  className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
+                >
+                  <FiLayers />
+                  <span>Category</span>
+                </Link>
+                <Link
+                  href="/dashboard/admin-store/discount"
+                  className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
+                >
+                  <MdDiscount />
+                  <span>Discount</span>
+                </Link>
+                <Link
+                  href="/dashboard/admin-store/inventory-management"
+                  className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
+                >
+                  <MdOutlineInventory />
+                  <span>Inventory</span>
+                </Link>
+                <Link
+                  href="/store/orders"
+                  className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
+                >
+                  <FiShoppingCart />
+                  <span>Pesanan</span>
+                </Link>
+                <Link
+                  href="/store/customers"
+                  className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
+                >
+                  <FiUsers />
+                  <span>Pelanggan</span>
+                </Link>
+              </nav>
+              <div className="p-6 bg-green-900 w-full">
+                <SignOut />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Main Content */}

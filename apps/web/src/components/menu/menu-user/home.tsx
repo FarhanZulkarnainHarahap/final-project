@@ -1,202 +1,359 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import Icons from "./icons";
 import Image from "next/image";
+import Link from "next/link";
+
+interface DiscountType {
+  id: string;
+  value: number;
+  discountType: "PERCENTAGE" | "FIXED";
+  minPurchase: number;
+  maxDiscount: number;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  imagePreview: { imageUrl: string }[];
+  storeName?: string | null;
+  Discount?: DiscountType[];
+}
+
+interface Store {
+  name: string;
+}
+
+interface StoreProductResponse {
+  Product: Product;
+  Store: Store;
+  stock: number;
+}
+
+// Helper untuk menghitung diskon
+const calculateDiscount = (price: number, discount: DiscountType | null) => {
+  if (!discount) return { finalPrice: price, discountAmount: 0, label: null };
+
+  let discountAmount = 0;
+  if (discount.discountType === "PERCENTAGE") {
+    discountAmount = (price * discount.value) / 100;
+    if (discount.maxDiscount > 0)
+      discountAmount = Math.min(discountAmount, discount.maxDiscount);
+  } else {
+    discountAmount = discount.value;
+  }
+
+  const finalPrice = Math.max(0, price - discountAmount);
+  const label =
+    discount.discountType === "PERCENTAGE"
+      ? `${discount.value}% OFF`
+      : `Rp ${discount.value.toLocaleString()} OFF`;
+
+  return { finalPrice, discountAmount, label };
+};
+
+const domain = process.env.NEXT_PUBLIC_DOMAIN;
+const DEFAULT_STORE_ID = "f96bdf49-a653-44f9-bcb8-39432ff738c1";
 
 export default function HomePageUser() {
+  const [provinces, setProvinces] = useState<string[]>([]);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [selectedProvince, setSelectedProvince] = useState<string>("All");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [stores, setStores] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [isGeoActive, setIsGeoActive] = useState<boolean>(false);
+
+  // 🔥 PERBAIKAN 1: Load initial data dari localStorage
+  useEffect(() => {
+    // Load saved location data
+    const savedLat = localStorage.getItem("lat");
+    const savedLng = localStorage.getItem("lng");
+    const savedProvince = localStorage.getItem("province");
+    const savedIsGeoActive = localStorage.getItem("isGeoActive");
+
+    if (savedLat && savedLng && savedIsGeoActive === "true") {
+      setLatitude(parseFloat(savedLat));
+      setLongitude(parseFloat(savedLng));
+      setIsGeoActive(true);
+      console.log("🔄 Loaded location from localStorage:", {
+        lat: savedLat,
+        lng: savedLng,
+      });
+    } else if (savedProvince && savedProvince !== "All") {
+      setSelectedProvince(savedProvince);
+      console.log("🔄 Loaded province from localStorage:", savedProvince);
+    }
+  }, []);
+
+  // 🔥 PERBAIKAN 2: Geolocation dengan localStorage sync
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          setLatitude(lat);
+          setLongitude(lng);
+          setIsGeoActive(true);
+
+          // 🔥 SIMPAN KE LOCALSTORAGE
+          localStorage.setItem("lat", lat.toString());
+          localStorage.setItem("lng", lng.toString());
+          localStorage.setItem("isGeoActive", "true");
+
+          // Clear province selection karena geo aktif
+          localStorage.removeItem("province");
+          setSelectedProvince("All");
+
+          console.log("📍 Geolocation active, saved to localStorage:", {
+            lat,
+            lng,
+          });
+        },
+        (error) => {
+          console.log("❌ Geolocation failed:", error.message);
+          setIsGeoActive(false);
+
+          // 🔥 BERSIHKAN LOCALSTORAGE
+          localStorage.removeItem("lat");
+          localStorage.removeItem("lng");
+          localStorage.setItem("isGeoActive", "false");
+        }
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        if (isGeoActive && (latitude === null || longitude === null)) return;
+
+        let url = "";
+
+        if (isGeoActive && latitude !== null && longitude !== null) {
+          url = `${domain}/api/v1/products/nearby?latitude=${latitude}&longitude=${longitude}&radius=20000`;
+          console.log("🔍 Fetching products by geolocation:", {
+            latitude,
+            longitude,
+          });
+        } else if (selectedProvince !== "All") {
+          url = `${domain}/api/v1/products/by-province?province=${selectedProvince}`;
+          console.log("🔍 Fetching products by province:", selectedProvince);
+        } else {
+          url = `${domain}/api/v1/products/by-store?storeId=${DEFAULT_STORE_ID}`;
+          console.log("🔍 Fetching products by default store");
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error("Gagal memuat produk.");
+        }
+
+        const data = await res.json();
+        const rawData = data.data ?? data.products ?? [];
+
+        const normalized: Product[] = rawData.map(
+          (item: Product | StoreProductResponse) =>
+            "Product" in item ? { ...item.Product, stock: item.stock } : item
+        );
+
+        const nearbyStoreNames: string[] = (data.nearbyStores ?? []).map(
+          (store: { name: string }) => store.name
+        );
+
+        setProducts(normalized);
+        setStores(nearbyStoreNames);
+      } catch (err) {
+        setError((err as Error).message);
+      }
+    };
+
+    fetchProducts();
+  }, [latitude, longitude, selectedProvince, isGeoActive]);
+
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:8000/api/v1/addresses/provinces"
+        );
+        const data = await res.json();
+        setProvinces(data.provinces || []);
+      } catch (err) {
+        console.error("Gagal mengambil provinsi", err);
+      }
+    };
+
+    fetchProvinces();
+  }, []);
+
+  // 🔥 PERBAIKAN 3: Handler untuk province change
+  const handleProvinceChange = (province: string) => {
+    setSelectedProvince(province);
+
+    // 🔥 SIMPAN KE LOCALSTORAGE
+    localStorage.setItem("province", province);
+
+    // Clear geolocation data karena user pilih province manual
+    if (province !== "All") {
+      setIsGeoActive(false);
+      setLatitude(null);
+      setLongitude(null);
+      localStorage.removeItem("lat");
+      localStorage.removeItem("lng");
+      localStorage.setItem("isGeoActive", "false");
+    }
+
+    console.log("🌍 Province changed to:", province);
+  };
+
   return (
-    <div>
-      <div className="grid grid-cols-[1fr_30%] px-40">
-        <div className="justify-center p-6">
-          <div className="grid grid-rows-2 gap-5">
-            <div className="">
-              <div className="bg-green-800 rounded-xl p-6 text-white flex flex-col justify-center w-full h-full">
-                <p className="italic text-sm">FARM FRESH</p>
-                <h1 className="text-4xl font-bold mt-2 mb-4">
-                  Organic & Healthy
-                </h1>
-                <p className="text-sm leading-relaxed">
-                  Donec sed mauris non quam molestie imperdiet. Integer
-                  ullamcorper, purus sit amet hendrerit tincidunt
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-5">
-              <div className="bg-orange-400 text-white rounded-xl p-6 flex flex-col items-center justify-center">
-                <Image
-                  src="/pineapple.png"
-                  alt="Pineapple"
-                  width={112}
-                  height={112}
-                  className="mb-4"
-                />
-                <h2 className="text-2xl font-bold">Healthy Juices</h2>
-                <button className="mt-4 bg-yellow-400 text-black px-5 py-2 rounded-md shadow">
-                  Shop Now
-                </button>
-              </div>
+    <div className="min-h-screen px-6 md:px-20 lg:px-40 py-10 grid grid-rows-[auto_1fr] gap-10">
+      <div>
+        <h1 className="text-3xl font-bold text-center">
+          Selamat Datang di Market Snap
+        </h1>
 
-              <div className="bg-cyan-600 text-white rounded-xl p-6 flex flex-col items-center justify-center">
-                <Image
-                  src="/pineapple.png"
-                  alt="Pineapple"
-                  width={112}
-                  height={112}
-                  className="mb-4"
-                />
-                <h2 className="text-2xl font-bold">Farm Fresh</h2>
-                <button className="mt-4 bg-yellow-400 text-black px-5 py-2 rounded-md shadow">
-                  Shop Now
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="justify-center p-6 ">
-          <div className="grid gap-y-5">
-            <div className="bg-orange-400 text-white rounded-xl p-6 flex flex-col items-center justify-center">
-              <Image
-                src="/pineapple.png"
-                alt="Pineapple"
-                width={112}
-                height={112}
-                className="mb-4"
-              />
-              <h2 className="text-2xl font-bold">Organic Fruits</h2>
-              <button className="mt-4 bg-yellow-400 text-black px-5 py-2 rounded-md shadow">
-                Shop Now
-              </button>
-            </div>
-            <div className="bg-orange-400 text-white rounded-xl p-6 flex flex-col items-center justify-center">
-              <Image
-                src="/pineapple.png"
-                alt="Pineapple"
-                width={112}
-                height={112}
-                className="mb-4"
-              />
-              <h2 className="text-2xl font-bold">Organic Fruits</h2>
-              <button className="mt-4 bg-yellow-400 text-black px-5 py-2 rounded-md shadow">
-                Shop Now
-              </button>
-            </div>
-          </div>
-        </div>
+        {error && <p className="text-red-400 text-center">{error}</p>}
       </div>
+      <div className="grid grid-rows-[auto_1fr] gap-5">
+        {!isGeoActive && (
+          <div className="w-full flex justify-end px-5">
+            <div className="flex items-center gap-2 bg-green-700 text-white px-6 py-2 rounded shadow-md">
+              <span className="font-semibold">Choose Location </span>
+              <select
+                className="border-none rounded-md px-3 py-2 text-black cursor-pointer shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+                value={selectedProvince}
+                onChange={(e) => handleProvinceChange(e.target.value)}
+              >
+                <option value="" disabled hidden>
+                  Choose Location
+                </option>
+                {provinces.map((province) => (
+                  <option key={province} value={province}>
+                    {province}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
 
-      {/* Best Sellers Section */}
-      <div className="py-8 px-40 w-full bg-blue-100">
-        <h2 className="text-left text-3xl font-bold mb-6">Best Sellers</h2>
-        <div className="grid grid-cols-4 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-lg flex flex-col items-center">
-            <Image
-              src="/tomato.png"
-              alt="Tomato"
-              width={150}
-              height={150}
-              className="mb-4"
-            />
-            <p className="text-xl font-bold">Omnis iste natus</p>
-            <p className="text-green-600">-40%</p>
-            <p className="text-xl font-semibold">$40.00 - $300.00</p>
-            <button className="bg-green-600 text-white mt-4 px-5 py-2 rounded-md">
-              Select options
-            </button>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg flex flex-col items-center">
-            <Image
-              src="/juice.png"
-              alt="Juice"
-              width={150}
-              height={150}
-              className="mb-4"
-            />
-            <p className="text-xl font-bold">Ut perspiciatis</p>
-            <p className="text-red-600">-48%</p>
-            <p className="text-xl font-semibold">$400.00</p>
-            <button className="bg-green-600 text-white mt-4 px-5 py-2 rounded-md">
-              Add to cart
-            </button>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg flex flex-col items-center">
-            <Image
-              src="/bread.png"
-              alt="Bread"
-              width={150}
-              height={150}
-              className="mb-4"
-            />
-            <p className="text-xl font-bold">Magnam aliquam</p>
-            <p className="text-yellow-600">-50%</p>
-            <p className="text-xl font-semibold">$410.00</p>
-            <button className="bg-green-600 text-white mt-4 px-5 py-2 rounded-md">
-              Add to cart
-            </button>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg flex flex-col items-center">
-            <Image
-              src="/onion.png"
-              alt="Onion"
-              width={150}
-              height={150}
-              className="mb-4"
-            />
-            <p className="text-xl font-bold">Quasi architecto</p>
-            <p className="text-yellow-600">-30%</p>
-            <p className="text-xl font-semibold">$88.00 - $99.00</p>
-            <button className="bg-green-600 text-white mt-4 px-5 py-2 rounded-md">
-              Select options
-            </button>
-          </div>
-        </div>
-      </div>
+        <div className="p-6 rounded-lg shadow-l flex flex-col gap-20">
+          <Icons />
+          <div>
+            <h2 className="text-2xl font-bold mb-4 text-green-900">Products</h2>
 
-      {/* Today's Deals Section */}
-      <div className="py-8 px-40 w-full">
-        <h2 className="text-left text-3xl font-bold mb-6">Today Deals</h2>
-        <div className="grid grid-cols-3 gap-5">
-          <div className="bg-white p-6 rounded-xl shadow-lg flex flex-col items-center border ">
-            <Image
-              src="/tomato.png"
-              alt="Tomato"
-              width={150}
-              height={150}
-              className="mb-4"
-            />
-            <p className="text-xl font-bold">Farm Fresh</p>
-            <p className="text-green-600">-40%</p>
-            <p className="text-xl font-semibold">$40.00 - $300.00</p>
-            <button className="bg-green-600 text-white mt-4 px-5 py-2 rounded-md">
-              Select Options
-            </button>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg flex flex-col items-center border">
-            <Image
-              src="/juice.png"
-              alt="Juice"
-              width={150}
-              height={150}
-              className="mb-4"
-            />
-            <p className="text-xl font-bold">Healthy Juice</p>
-            <p className="text-red-600">-48%</p>
-            <p className="text-xl font-semibold">$49.00 - $199.00</p>
-            <button className="bg-green-600 text-white mt-4 px-5 py-2 rounded-md">
-              Select Options
-            </button>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg flex flex-col items-center border">
-            <Image
-              src="/bread.png"
-              alt="Bread"
-              width={150}
-              height={150}
-              className="mb-4"
-            />
+            {/* 🔥 PERBAIKAN 4: Status indicator */}
+            <div className="mb-4 p-3 bg-gray-100 rounded-lg">
+              <p className="text-sm text-gray-600">
+                <strong>Status:</strong>{" "}
+                {isGeoActive
+                  ? `📍 Your nearest location`
+                  : selectedProvince !== "All"
+                    ? `🌍 Province: ${selectedProvince}`
+                    : "🏪 Main store location"}
+              </p>
+            </div>
 
-            <p className="text-xl font-bold">Fresh Breads</p>
-            <p className="text-yellow-600">-50%</p>
-            <p className="text-xl font-semibold">$88.00 - $99.00</p>
-            <button className="bg-green-600 text-white mt-4 px-5 py-2 rounded-md">
-              Select Options
-            </button>
+            {isGeoActive && stores.length > 0 && (
+              <div className="mb-2 text-xl text-green-900 font-semibold">
+                <strong>Nearby stores:</strong> {stores.join(", ")}
+              </div>
+            )}
+
+            {products.length === 0 && (
+              <p className="text-green-600">No products found.</p>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {products.map((product) => {
+                // Ambil diskon aktif pertama
+                const activeDiscount = product.Discount?.[0] || null;
+                const { finalPrice, discountAmount, label } = calculateDiscount(
+                  product.price,
+                  activeDiscount
+                );
+
+                return (
+                  <div
+                    key={product.id}
+                    className="bg-white border rounded-lg shadow hover:shadow-lg transition-transform transform hover:scale-105 p-4 relative"
+                  >
+                    {/* Discount Badge */}
+                    {activeDiscount && (
+                      <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-bold z-10">
+                        {label}
+                      </div>
+                    )}
+
+                    {/* Hot Deal Badge */}
+                    {activeDiscount &&
+                      ((activeDiscount.discountType === "PERCENTAGE" &&
+                        activeDiscount.value >= 30) ||
+                        (activeDiscount.discountType === "FIXED" &&
+                          activeDiscount.value >= 50000)) && (
+                        <div className="absolute top-2 right-2 bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-bold animate-pulse z-10">
+                          🔥
+                        </div>
+                      )}
+
+                    <Image
+                      src={
+                        product.imagePreview?.[0]?.imageUrl ?? "/default.jpg"
+                      }
+                      alt={product.name}
+                      width={200}
+                      height={150}
+                      className="mx-auto mb-4 rounded object-contain"
+                    />
+
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">
+                      {product.name}
+                    </h3>
+
+                    {/* Price with Discount */}
+                    <div className="text-center mb-2 min-h-[72px]">
+                      {activeDiscount ? (
+                        <>
+                          <p className="text-sm text-gray-400 line-through">
+                            Rp {product.price.toLocaleString()}
+                          </p>
+                          <p className="text-xl font-bold text-green-700">
+                            Rp {finalPrice.toLocaleString()}
+                          </p>
+                          <p className="text-xs text-red-600">
+                            Save Rp {discountAmount.toLocaleString()}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-xl font-bold text-green-700">
+                          Rp {product.price.toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+
+                    <p className="text-sm text-gray-600 text-center mb-4">
+                      Stock: {product.stock}
+                    </p>
+
+                    <Link
+                      href={`/products/${product.id}`}
+                      className="block w-full bg-green-600 text-white text-center py-2 rounded-lg hover:bg-green-700 transition"
+                    >
+                      View product
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

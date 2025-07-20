@@ -1,35 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation"; // Import useRouter untuk redirect
+import { useState, FormEvent } from "react";
+
+interface RegisterResponse {
+  message: string;
+}
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
-  const router = useRouter(); // Hook untuk routing
-
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // Reset error/success message
-    setError(null);
-    setSuccessMessage(null);
-
-    const formData = {
-      email,
-      firstName,
-      lastName,
-      username,
-      password,
-      phoneNumber,
-    };
+    setLoading(true);
+    setMessage(null);
 
     try {
       const response = await fetch(
@@ -39,159 +25,94 @@ export default function RegisterPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ email, username }),
         }
       );
 
+      const data: RegisterResponse = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
-        setError(data.message || "Registration failed");
-        return;
+        throw new Error(data.message || "Pendaftaran gagal.");
       }
 
-      const data = await response.json();
-      setSuccessMessage(
-        data.message ||
-          "Registration successful! Please check your email to verify."
-      );
-
-      // Redirect to home page after successful registration
-      setTimeout(() => {
-        router.push("/"); // Redirect to localhost:3000 (Home page)
-      }, 2000); // Give a 2-second delay before redirect
+      setMessage(data.message);
     } catch (error) {
-      console.error(error);
-      setError("An error occurred. Please try again.");
+      if (error instanceof Error) {
+        setMessage(error.message);
+      } else {
+        setMessage("Terjadi kesalahan tidak terduga.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-white py-10">
-      <div className="w-full max-w-md p-8 bg-[#191717] shadow-lg rounded-lg border">
-        <h2 className="text-2xl font-semibold text-center text-green-500 mb-6">
-          Register
+    <div className="min-h-screen bg-gradient-to-br from-green-900 to-green-600 flex items-center justify-center px-4">
+      <form
+        onSubmit={handleRegister}
+        className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-lg animate-fade-in"
+      >
+        <h2 className="text-3xl font-bold mb-6 text-center text-green-900">
+          Register to MarketSnap
         </h2>
 
-        {error && (
-          <div className="bg-red-500 text-white p-2 mb-4 rounded">{error}</div>
-        )}
-        {successMessage && (
-          <div className="bg-green-500 text-white p-2 mb-4 rounded">
-            {successMessage}
+        {message && (
+          <div className="mb-4 p-3 rounded bg-yellow-50 text-yellow-800 text-sm text-center border border-yellow-300">
+            {message}
           </div>
         )}
 
-        <form onSubmit={handleRegister}>
-          <div className="mb-4">
-            <label
-              htmlFor="firstName"
-              className="block text-sm font-medium text-green-500"
-            >
-              First Name
-            </label>
-            <input
-              type="text"
-              id="firstName"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-              className="w-full mt-2 p-2 border text-white border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-customGreen"
-            />
-          </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Email
+          </label>
+          <input
+            type="email"
+            className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-900"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
 
-          <div className="mb-4">
-            <label
-              htmlFor="lastName"
-              className="block text-sm font-medium text-green-500"
-            >
-              Last Name
-            </label>
-            <input
-              type="text"
-              id="lastName"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-              className="w-full mt-2 p-2 border text-white border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-customGreen"
-            />
-          </div>
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Username
+          </label>
+          <input
+            type="text"
+            className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-900"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </div>
 
-          <div className="mb-4">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-green-500"
-            >
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full mt-2 p-2 border text-white border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-customGreen"
-            />
-          </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-green-900 hover:bg-green-800 text-white font-semibold py-2 rounded-lg transition duration-300"
+        >
+          {loading ? "Registering..." : "Register"}
+        </button>
+      </form>
 
-          <div className="mb-4">
-            <label
-              htmlFor="username"
-              className="block text-sm font-medium text-green-500"
-            >
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              className="w-full mt-2 p-2 border text-white border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-customGreen"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-green-500"
-            >
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full mt-2 p-2 border text-white border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-customGreen"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label
-              htmlFor="phoneNumber"
-              className="block text-sm font-medium text-green-500"
-            >
-              Phone Number
-            </label>
-            <input
-              type="text"
-              id="phoneNumber"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              required
-              className="w-full mt-2 p-2 border text-white border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-customGreen"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-2 px-4 bg-customGreen bg-green-700 text-white rounded-lg hover:bg-white hover:text-black focus:outline-none focus:ring-2 focus:ring-customGreen"
-          >
-            Register
-          </button>
-        </form>
-      </div>
+      <style jsx>{`
+        .animate-fade-in {
+          animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(15px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }

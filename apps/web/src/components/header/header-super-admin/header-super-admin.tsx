@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { FiMenu, FiX } from "react-icons/fi";
 import Link from "next/link";
+import SignOut from "@/components/login/logout";
 
 interface User {
   id: string;
   firstName: string;
   lastName: string;
   name: string;
+  username: string;
   email: string;
   role: string;
   // avatarUrl?: string; // opsional kalau punya URL foto
@@ -55,10 +57,18 @@ export default function MenuNavbarAdmin({
         </button>
         <div className="text-sm">
           {users ? (
-            <span>
-              Welcome,
-              <strong>{users.name}</strong>
-            </span>
+            <div>
+              <span>
+                Welcome,{" "}
+                <strong>
+                  {users.name}
+                  {users.username}
+                </strong>
+              </span>
+              <div className="text-xs text-green-200">
+                Role: <span className="font-semibold">{users.role}</span>
+              </div>
+            </div>
           ) : (
             <span>Loading user...</span>
           )}
@@ -68,7 +78,7 @@ export default function MenuNavbarAdmin({
       <div className="flex flex-1">
         {/* Sidebar */}
         <div
-          className={`flex flex-col bg-green-600 text-white shadow-lg transition-all duration-300 ease-in-out ${
+          className={`flex flex-col bg-green-600 text-white shadow-lg transition-all duration-300  h-fit ease-in-out  ${
             sidebarOpen ? "w-64" : "w-0"
           } overflow-hidden`}
         >
@@ -101,36 +111,61 @@ export default function MenuNavbarAdmin({
           </div>
 
           {/* Menu */}
-          <nav className="p-4 space-y-2">
-            <Link
-              href="/dashboard/admin"
-              className="block w-full text-left hover:bg-green-700 px-2 py-1 rounded"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/dashboard/admin/user"
-              className="block w-full text-left hover:bg-green-700 px-2 py-1 rounded"
-            >
-              Users
-            </Link>
-            <Link
-              href="/dashboard/admin/store"
-              className="block w-full text-left hover:bg-green-700 px-2 py-1 rounded"
-            >
-              Store
-            </Link>
-            <Link
-              href="/dashboard/admin/settings"
-              className="block w-full text-left hover:bg-green-700 px-2 py-1 rounded"
-            >
-              Settings
-            </Link>
-          </nav>
+          <div className="flex flex-col h-[81vh] justify-between">
+            <nav className="p-4 space-y-2">
+              <Link
+                href="/dashboard/admin"
+                className="block w-full text-left hover:bg-green-700 px-2 py-1 rounded"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/dashboard/admin/user"
+                className="block w-full text-left hover:bg-green-700 px-2 py-1 rounded"
+              >
+                User
+              </Link>
+              <Link
+                href="/dashboard/admin/store"
+                className="block w-full text-left hover:bg-green-700 px-2 py-1 rounded"
+              >
+                Store
+              </Link>
+              <Link
+                href="/dashboard/admin/product"
+                className="block w-full text-left hover:bg-green-700 px-2 py-1 rounded"
+              >
+                Product
+              </Link>
+              <Link
+                href="/dashboard/admin/category"
+                className="block w-full text-left hover:bg-green-700 px-2 py-1 rounded"
+              >
+                Category
+              </Link>
+              <Link
+                href="/dashboard/admin/user-store"
+                className="block w-full text-left hover:bg-green-700 px-2 py-1 rounded"
+              >
+                Store Admin
+              </Link>
+              <Link
+                href="/dashboard/admin/inventory-history"
+                className="block w-full text-left hover:bg-green-700 px-2 py-1 rounded"
+              >
+                Inventory
+              </Link>
+            </nav>
+            <div className="p-6 bg-green-900 w-full">
+              <div>
+                <SignOut />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 transition-all duration-300 ease-in-out p-4 min-h-screen">
+        <main className="flex-1 transition-all duration-300 ease-in-out p-4 h-fit">
           {children}
         </main>
       </div>

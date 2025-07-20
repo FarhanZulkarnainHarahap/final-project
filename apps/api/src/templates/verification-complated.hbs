@@ -6,7 +6,7 @@
     <style>
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f4f7fc;
+        background-color: #14532d; /* Tailwind green-900 */
         margin: 0;
         padding: 0;
         display: flex;
@@ -15,34 +15,45 @@
         height: 100vh;
         text-align: center;
       }
+
       .container {
         background-color: #ffffff;
         padding: 40px 50px;
         border-radius: 8px;
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
         max-width: 500px;
         width: 100%;
       }
+
+      .check-icon {
+        font-size: 50px;
+        color: #14532d;
+        margin-bottom: 20px;
+      }
+
       h1 {
-        color: #4caf50;
+        color: #14532d;
         font-size: 32px;
         margin-bottom: 15px;
       }
+
       p {
         font-size: 18px;
-        color: #555;
+        color: #444;
         line-height: 1.6;
       }
+
       .redirect-message {
         margin-top: 30px;
         font-size: 16px;
-        color: #777;
+        color: #666;
       }
-      .check-icon {
-        font-size: 50px;
-        color: #4caf50;
-        margin-bottom: 20px;
+
+      .redirect-message a {
+        color: #14532d;
+        text-decoration: underline;
       }
+
       .footer {
         margin-top: 20px;
         font-size: 14px;
@@ -54,8 +65,10 @@
     <div class="container">
       <div class="check-icon">✔️</div>
       <h1>Email Successfully Verified!</h1>
-      <p>Your email has been verified. You will be redirected to the homepage
-        shortly...</p>
+      <p>
+        Your email has been verified. You will be redirected to the homepage
+        shortly...
+      </p>
       <div class="redirect-message">
         If you are not redirected,
         <a href="http://localhost:3000">click here</a>.
@@ -63,7 +76,7 @@
       <div class="footer">
         &copy;
         {{currentYear}}
-        Maket Snap. All rights reserved.
+        Market Snap. All rights reserved.
       </div>
     </div>
   </body>

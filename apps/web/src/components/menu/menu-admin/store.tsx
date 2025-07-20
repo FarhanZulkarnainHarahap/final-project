@@ -1,236 +1,223 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
+import Link from "next/link";
+import CreateStoreSection from "./create-newstore";
+import EditStoreSection from "./edit-store";
+
+interface StoreAddress {
+  id: string;
+  latitude: number;
+  longitude: number;
+  Address: {
+    id: string;
+    address: string;
+    city: string;
+    province: string;
+    postalCode: string;
+    destination: string;
+  }[];
+}
 
 interface Store {
   id: string;
   name: string;
-  address: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  createdBy?: {
-    username: string;
-  };
-  ownedBy?: {
-    username: string;
-  };
+  StoreAddress: StoreAddress[];
 }
 
-interface User {
-  id: string;
-  username: string;
-  role: string;
-}
-
-export default function StorePageSection() {
+export default function StoreList() {
   const [stores, setStores] = useState<Store[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [storeAdmins, setStoreAdmins] = useState<User[]>([]);
-
-  // Form fields
-  const [targetUsername, setTargetUsername] = useState("");
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [province, setProvince] = useState("");
-  const [postalCode, setPostalCode] = useState("");
+  const [error, setError] = useState<string>("");
+  const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const [showEditModal, setShowEditModal] = useState<boolean>(false);
+  const [editedName, setEditedName] = useState<string>("");
+  const [address, setAddress] = useState<string>("");
+  const [city, setCity] = useState<string>("");
+  const [province, setProvince] = useState<string>("");
+  const [postalCode, setPostalCode] = useState<string>("");
+  const [destination, setDestination] = useState<string>("");
+  const [latitude, setLatitude] = useState<number>(0);
+  const [longitude, setlongitude] = useState<number>(0);
 
   useEffect(() => {
-    async function fetchStores() {
-      try {
-        const res = await axios.get("http://localhost:8000/api/v1/stores", {
-          withCredentials: true,
-        });
-        setStores(res.data.data);
-      } catch (err) {
-        console.error("Error fetching stores:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    async function fetchStoreAdmins() {
-      try {
-        const res = await axios.get(
-          "http://localhost:8000/api/v1/user/users?role=STORE_ADMIN",
-          { withCredentials: true }
-        );
-        setStoreAdmins(res.data.data);
-      } catch (err) {
-        console.error("Error fetching store admins:", err);
-      }
-    }
-
     fetchStores();
-    fetchStoreAdmins();
   }, []);
 
-  const handleCreateStore = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const fetchStores = async () => {
     try {
-      await axios.post(
-        "http://localhost:8000/api/v1/stores",
+      const response = await fetch(
+        "http://localhost:8000/api/v1/stores/super-admin",
         {
-          targetUsername,
-          name,
-          address,
-          city,
-          province,
-          postalCode,
-        },
-        { withCredentials: true }
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
       );
 
-      setShowModal(false);
+      if (!response.ok) throw new Error("Failed to fetch stores");
 
-      const res = await axios.get("http://localhost:8000/api/v1/stores", {
-        withCredentials: true,
-      });
-      setStores(res.data.data);
-
-      // Reset form
-      setTargetUsername("");
-      setName("");
-      setAddress("");
-      setCity("");
-      setProvince("");
-      setPostalCode("");
+      const data = await response.json();
+      setStores(data.data);
     } catch (error) {
-      console.error("Error creating store:", error);
-      alert("Failed to create store.");
+      console.log(error);
+      setError("Gagal mengambil data toko.");
     }
   };
 
-  if (loading) return <p>Loading...</p>;
+  const handleOpenEditModal = (store: Store) => {
+    const addr = store.StoreAddress[0]?.Address[0];
+    setEditingStore(store);
+    setEditedName(store.name);
+    setAddress(addr?.address || "");
+    setCity(addr?.city || "");
+    setProvince(addr?.province || "");
+    setPostalCode(addr?.postalCode || "");
+    setDestination(addr?.destination || "");
+    setLatitude(store.StoreAddress[0]?.latitude || 0);
+    setlongitude(store.StoreAddress[0]?.longitude || 0);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateStore = async () => {
+    if (!editingStore) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/v1/stores/super-admin/${editingStore.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            name: editedName,
+            address,
+            city,
+            province,
+            postalCode,
+            destination,
+            latitude,
+            longitude,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update store");
+
+      fetchStores();
+      setShowEditModal(false);
+      setEditingStore(null);
+    } catch (error) {
+      console.log(error);
+      setError("Gagal memperbarui toko.");
+    }
+  };
+
+  const handleDelete = async (storeId: string) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/v1/stores/super-admin/${storeId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to delete store");
+
+      setStores(stores.filter((store) => store.id !== storeId));
+    } catch (error) {
+      console.log(error);
+      setError("Gagal menghapus toko.");
+    }
+  };
+
+  if (error)
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <span className="text-xl text-red-500">{error}</span>
+      </div>
+    );
 
   return (
-    <section>
-      <h1 className="text-2xl font-bold mb-4">All Stores</h1>
-      <button
-        onClick={() => setShowModal(true)}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mb-6"
-      >
-        Create New Store
-      </button>
-
-      {showModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
-            <h2 className="text-lg font-bold mb-4">Create New Store</h2>
-            <form onSubmit={handleCreateStore} className="space-y-3">
-              <div>
-                <label className="block mb-1 font-medium">
-                  Select Store Admin
-                </label>
-                <select
-                  value={targetUsername}
-                  onChange={(e) => setTargetUsername(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">-- Select User --</option>
-                  {storeAdmins.map((user) => (
-                    <option key={user.id} value={user.username}>
-                      {user.username}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <input
-                type="text"
-                placeholder="Store Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
-
-              <input
-                type="text"
-                placeholder="Address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                required
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
-
-              <input
-                type="text"
-                placeholder="City"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                required
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
-
-              <input
-                type="text"
-                placeholder="Province"
-                value={province}
-                onChange={(e) => setProvince(e.target.value)}
-                required
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
-
-              <input
-                type="text"
-                placeholder="Postal Code"
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
-                required
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
-
-              <div className="flex justify-end space-x-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Create
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {stores.length === 0 ? (
-        <p>No stores found. You can create one.</p>
-      ) : (
-        <ul className="space-y-5">
+    <div className="max-w-4xl mx-auto p-4">
+      <h1 className="text-3xl font-bold text-center mb-6">Store Management</h1>
+      <div className="text-center mb-6">
+        <CreateStoreSection onStoreCreated={fetchStores} />
+      </div>
+      {stores.length > 0 ? (
+        <ul className="space-y-4">
           {stores.map((store) => (
             <li
               key={store.id}
-              className="border border-gray-300 rounded-lg p-4"
+              className="border border-gray-300 rounded-lg p-4 bg-white shadow-md"
             >
-              <h2 className="text-xl font-semibold">{store.name}</h2>
-              <p className="mt-1 text-gray-700">
-                {store.address}, {store.city}, {store.province},{" "}
-                {store.postalCode}
-              </p>
-              <p className="text-sm text-gray-600 mt-1">
-                <span className="font-medium">Owner:</span>{" "}
-                {store.ownedBy?.username ?? "Unknown"}
-              </p>
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">Created By:</span>{" "}
-                {store.createdBy?.username ?? "Unknown"}
-              </p>
+              <div>
+                <h3 className="text-xl font-semibold">{store.name}</h3>
+                <p className="text-gray-600">
+                  {store.StoreAddress[0]?.Address[0]?.address},{" "}
+                  {store.StoreAddress[0]?.Address[0]?.city},{" "}
+                  {store.StoreAddress[0]?.Address[0]?.province}
+                </p>
+                <p className="text-gray-500">
+                  {store.StoreAddress[0]?.Address[0]?.postalCode}
+                </p>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-4">
+                <Link
+                  href={`/dashboard/admin/store/${store.id}`}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  View Store
+                </Link>
+                <button
+                  onClick={() => handleOpenEditModal(store)}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+                >
+                  Edit Store
+                </button>
+                <button
+                  onClick={() => handleDelete(store.id)}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                >
+                  Delete Store
+                </button>
+              </div>
             </li>
           ))}
         </ul>
+      ) : (
+        <p className="text-center text-gray-500">No stores available.</p>
       )}
-    </section>
+
+      {showEditModal && editingStore && (
+        <EditStoreSection
+          editedName={editedName}
+          setEditedName={setEditedName}
+          address={address}
+          setAddress={setAddress}
+          city={city}
+          setCity={setCity}
+          province={province}
+          setProvince={setProvince}
+          postalCode={postalCode}
+          setPostalCode={setPostalCode}
+          destination={destination}
+          setDestination={setDestination}
+          latitude={latitude}
+          setLatitude={setLatitude}
+          longitude={longitude}
+          setlongitude={setlongitude}
+          handleUpdateStore={handleUpdateStore}
+          setShowEditModal={setShowEditModal}
+        />
+      )}
+    </div>
   );
 }
