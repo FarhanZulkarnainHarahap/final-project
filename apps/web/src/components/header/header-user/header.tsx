@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Submenu from "./sub-menu";
 import Image from "next/image";
-import { FiSearch, FiHeart, FiShoppingBag } from "react-icons/fi";
+import { FiHeart, FiShoppingBag } from "react-icons/fi";
 import LoginPageSection from "@/components/login/login";
 import Link from "next/link";
 import Footer from "@/components/footer/footer";
@@ -64,7 +64,7 @@ export default function MenuNavbarUser({
               <span className="font-bold text-xl">MARKET SNAP</span>
             </div>
             <div className="flex-1">
-              <div className="flex rounded overflow-hidden bg-white">
+              {/* <div className="flex rounded overflow-hidden bg-white">
                 <input
                   type="text"
                   placeholder="Search..."
@@ -73,7 +73,7 @@ export default function MenuNavbarUser({
                 <button className="bg-black px-4">
                   <FiSearch className="text-white" />
                 </button>
-              </div>
+              </div> */}
             </div>
             <div className="flex items-center gap-4 shrink-0">
               <FiHeart size={20} />

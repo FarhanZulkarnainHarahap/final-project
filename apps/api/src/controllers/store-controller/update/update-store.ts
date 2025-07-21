@@ -9,7 +9,7 @@ export async function updateStore(req: Request, res: Response) {
   const {
     name,
     latitude,
-    longtitude,
+    longitude,
     address,
     city,
     province,
@@ -49,7 +49,7 @@ export async function updateStore(req: Request, res: Response) {
       where: { id: storeAddressId },
       data: {
         latitude: parseFloat(latitude),
-        longtitude: parseFloat(longtitude),
+        longitude: parseFloat(longitude),
       },
     });
 

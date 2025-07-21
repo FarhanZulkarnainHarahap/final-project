@@ -86,6 +86,12 @@ export default function LoginPageSection() {
                     Profile
                   </Link>
                   <Link
+                    href="/dashboard/user/my-orders"
+                    className="px-4 py-2 hover:bg-gray-400 hover:text-green-900 cursor-pointer block rounded-md text-center transition"
+                  >
+                    My Orders
+                  </Link>
+                  <Link
                     href="/settings"
                     className="px-4 py-2 hover:bg-gray-400 hover:text-green-900 cursor-pointer block rounded-md text-center transition"
                   >

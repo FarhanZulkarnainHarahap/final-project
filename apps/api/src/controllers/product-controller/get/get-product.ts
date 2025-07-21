@@ -279,6 +279,7 @@ export async function getProductById(req: Request, res: Response) {
         StoreProduct: storeProduct ? [storeProduct] : [],
       },
     });
+    return;
   } catch (error) {
     console.error("❌ Error getProductById:", error);
     res.status(500).json({ message: "Error fetching product by ID" });
@@ -325,7 +326,6 @@ export async function getAllProductsByCity(req: Request, res: Response) {
       : "createdAt";
     const finalSortOrder = sortOrder.toLowerCase() === "asc" ? "asc" : "desc";
 
-    // Step 1: Get all addresses in that province
     const addresses = await prisma.address.findMany({
       where: {
         province: {
@@ -339,7 +339,6 @@ export async function getAllProductsByCity(req: Request, res: Response) {
 
     const storeAddressIds = addresses.map((addr) => addr.storeAddressId!);
 
-    // Step 2: Get store IDs connected to those addresses
     const storeAddresses = await prisma.storeAddress.findMany({
       where: {
         id: { in: storeAddressIds },
@@ -349,7 +348,6 @@ export async function getAllProductsByCity(req: Request, res: Response) {
 
     const storeIds = storeAddresses.map((sa) => sa.storeId);
 
-    // Step 3: Filter by category and/or search if provided
     let productIds: string[] | undefined = undefined;
 
     if (category || search) {
@@ -382,24 +380,20 @@ export async function getAllProductsByCity(req: Request, res: Response) {
       productIds = products.map((p) => p.id);
     }
 
-    // Step 4: Build WHERE clause
     const where: any = {
       storeId: { in: storeIds },
       deletedAt: null,
       ...(productIds && { productId: { in: productIds } }),
     };
 
-    // Step 5: Get total count
     const totalProducts = await prisma.storeProduct.count({
       where,
     });
 
-    // Step 6: Build orderBy for nested Product relation
     const orderBy: any = {
       Product: { [finalSortBy]: finalSortOrder },
     };
 
-    // Step 7: Get storeProducts with pagination
     const storeProducts = await prisma.storeProduct.findMany({
       where,
       include: {
@@ -407,6 +401,16 @@ export async function getAllProductsByCity(req: Request, res: Response) {
           include: {
             imagePreview: true,
             ProductCategory: { include: { Category: true } },
+            Discount: {
+              where: {
+                storeId: { in: storeIds }, // Only get discounts for current stores
+                deletedAt: null,
+                startDate: { lte: new Date() },
+                endDate: { gte: new Date() },
+              },
+              orderBy: { value: "desc" },
+              take: 1,
+            },
           },
         },
         Store: {
@@ -424,7 +428,6 @@ export async function getAllProductsByCity(req: Request, res: Response) {
       take: limit,
     });
 
-    // Step 8: Calculate pagination info
     const totalPages = Math.ceil(totalProducts / limit);
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
@@ -454,74 +457,294 @@ export async function getAllProductsByCity(req: Request, res: Response) {
   }
 }
 
-export async function getNearbyProducts(req: Request, res: Response) {
-  const { latitude, longitude, radius = 5000 } = req.query;
-
-  if (!latitude || !longitude) {
-    res.status(400).json({ message: "Latitude and longitude are required." });
-    return;
-  }
-
-  const lat = parseFloat(latitude as string);
-  const lon = parseFloat(longitude as string);
-  const rad = parseFloat(radius as string);
-
+export async function getNearbyProducts(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
-    // Ambil semua store beserta alamat dan produk
+    // 1. EXTRACT QUERY PARAMETERS
+    const { latitude, longitude, radius = 5000, category } = req.query;
+    const search = req.query.search as string | undefined;
+
+    // Pagination parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    // Sort parameters
+    const sortBy = (req.query.sortBy as string) || "createdAt"; // default sort by createdAt
+    const sortOrder = (req.query.sortOrder as string) || "desc"; // default desc
+
+    // Distance sort parameter (specific to nearby search)
+    const sortByDistance = req.query.sortByDistance === "true";
+
+    // Validate required parameters
+    if (!latitude || !longitude) {
+      res.status(400).json({ message: "Latitude and longitude are required." });
+      return;
+    }
+
+    // Validate and parse coordinates
+    const lat = parseFloat(latitude as string);
+    const lon = parseFloat(longitude as string);
+    const rad = parseFloat(radius as string);
+
+    if (isNaN(lat) || isNaN(lon) || isNaN(rad)) {
+      res
+        .status(400)
+        .json({ message: "Invalid latitude, longitude, or radius." });
+      return;
+    }
+
+    const allowedSortFields = ["name", "price", "createdAt", "updatedAt"];
+    const finalSortBy = allowedSortFields.includes(sortBy)
+      ? sortBy
+      : "createdAt";
+
+    const finalSortOrder = sortOrder.toLowerCase() === "asc" ? "asc" : "desc";
+
     const stores = await prisma.store.findMany({
       include: {
-        StoreAddress: true,
-        StoreProduct: {
+        StoreAddress: {
           include: {
-            Product: true,
+            Address: true,
           },
         },
       },
     });
 
-    // Filter store berdasarkan jarak dari StoreAddress
-    const nearbyStores = stores.filter((store) => {
-      const addr = store.StoreAddress[0]; // Ambil StoreAddress pertama jika ada
-      if (!addr?.latitude || !addr?.longtitude) return false;
+    const nearbyStores = stores
+      .map((store) => {
+        const addr = store.StoreAddress[0];
+        if (!addr?.latitude || !addr?.longitude) return null;
 
-      const distance = calculateDistance(
-        lat,
-        lon,
-        addr.latitude,
-        addr.longtitude
+        const distance = calculateDistance(
+          lat,
+          lon,
+          addr.latitude,
+          addr.longitude
+        );
+        return distance <= rad
+          ? {
+              id: store.id,
+              name: store.name,
+              distance: Math.round(distance * 100) / 100,
+              address: addr.Address,
+            }
+          : null;
+      })
+      .filter(
+        (
+          s
+        ): s is {
+          id: string;
+          name: string;
+          distance: number;
+          address: any;
+        } => s !== null
       );
-      // Simpan nilai jarak ke dalam store.distance (opsional, jika perlu dipakai di frontend)
-      store.distance = distance;
 
-      return distance <= rad;
+    if (sortByDistance) {
+      nearbyStores.sort((a, b) => a.distance - b.distance);
+    }
+
+    if (nearbyStores.length === 0) {
+      res.json({
+        nearbyStores: [],
+        products: [],
+        pagination: {
+          currentPage: page,
+          totalPages: 0,
+          totalItems: 0,
+          itemsPerPage: limit,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+        filters: {
+          search: search || null,
+          category: category || null,
+          radius: rad,
+          sortBy: sortByDistance ? "distance" : finalSortBy,
+          sortOrder: finalSortOrder,
+        },
+      });
+      return;
+    }
+
+    const nearbyStoreIds = nearbyStores.map((s) => s.id);
+
+    const productFilter: any = {
+      deletedAt: null,
+    };
+
+    if (search) {
+      productFilter.name = {
+        contains: search,
+        mode: "insensitive",
+      };
+    }
+
+    if (category && typeof category === "string") {
+      productFilter.ProductCategory = {
+        some: {
+          Category: {
+            name: { equals: category, mode: "insensitive" },
+          },
+        },
+      };
+    }
+
+    const storeProductWhere = {
+      storeId: { in: nearbyStoreIds },
+      deletedAt: null,
+      Product: productFilter,
+    };
+
+    const totalProducts = await prisma.storeProduct.count({
+      where: storeProductWhere,
     });
 
-    // Ambil semua produk dari toko-toko terdekat
-    const products = nearbyStores.flatMap((store) =>
-      store.StoreProduct.map((sp) => sp.Product)
-    );
+    let orderBy: any = {};
 
-    res.json({
-      nearbyStores: nearbyStores.map((s) => ({
-        id: s.id,
-        name: s.name,
-        distance: s.distance,
+    if (sortByDistance) {
+      orderBy = {
+        Product: { [finalSortBy]: finalSortOrder },
+      };
+    } else {
+      orderBy = {
+        Product: { [finalSortBy]: finalSortOrder },
+      };
+    }
+
+    const storeProducts = await prisma.storeProduct.findMany({
+      where: storeProductWhere,
+      include: {
+        Product: {
+          include: {
+            imagePreview: true,
+            imageContent: true,
+            ProductCategory: {
+              include: { Category: true },
+            },
+            User: true,
+            Discount: {
+              where: {
+                deletedAt: null,
+                startDate: { lte: new Date() },
+                endDate: { gte: new Date() },
+              },
+              orderBy: { value: "desc" },
+              take: 1,
+            },
+          },
+        },
+        Store: {
+          include: {
+            StoreAddress: {
+              include: {
+                Address: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy,
+      skip: sortByDistance ? 0 : skip,
+      take: sortByDistance ? undefined : limit,
+    });
+
+    let productsWithDistance = storeProducts.map((sp) => {
+      const storeData = nearbyStores.find((ns) => ns.id === sp.storeId);
+
+      return {
+        id: sp.Product.id,
+        name: sp.Product.name,
+        description: sp.Product.description,
+        price: sp.Product.price,
+        weight: sp.Product.weight,
+        stock: sp.stock,
+        storeName: sp.Store?.name ?? null,
+        storeDistance: storeData?.distance ?? 0,
+        storeAddress: storeData?.address ?? null,
+        imagePreview: sp.Product.imagePreview,
+        imageContent: sp.Product.imageContent,
+        createdAt: sp.Product.createdAt,
+        updatedAt: sp.Product.updatedAt,
+        category: sp.Product.ProductCategory.map((pc) => pc.Category.name),
+        user: sp.Product.User,
+        Discount: sp.Product.Discount,
+      };
+    });
+
+    if (sortByDistance) {
+      productsWithDistance.sort((a, b) => {
+        if (finalSortOrder === "asc") {
+          return a.storeDistance - b.storeDistance;
+        } else {
+          return b.storeDistance - a.storeDistance;
+        }
+      });
+      const startIndex = skip;
+      const endIndex = skip + limit;
+      productsWithDistance = productsWithDistance.slice(startIndex, endIndex);
+    }
+
+    const totalPages = Math.ceil(totalProducts / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    const response = {
+      nearbyStores: nearbyStores.map((store) => ({
+        id: store.id,
+        name: store.name,
+        distance: store.distance,
+        address: store.address,
       })),
-      products,
-    });
+      products: productsWithDistance,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: totalProducts,
+        itemsPerPage: limit,
+        hasNextPage,
+        hasPrevPage,
+      },
+      filters: {
+        search: search || null,
+        category: category || null,
+        radius: rad,
+        latitude: lat,
+        longitude: lon,
+        sortBy: sortByDistance ? "distance" : finalSortBy,
+        sortOrder: finalSortOrder,
+        sortByDistance,
+      },
+      summary: {
+        totalNearbyStores: nearbyStores.length,
+        averageDistance:
+          nearbyStores.length > 0
+            ? Math.round(
+                (nearbyStores.reduce((sum, store) => sum + store.distance, 0) /
+                  nearbyStores.length) *
+                  100
+              ) / 100
+            : 0,
+      },
+    };
+
+    res.status(200).json(response);
   } catch (error) {
     console.error("Error fetching nearby products:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: "Internal server error" });
   }
 }
-
 function calculateDistance(
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number
 ): number {
-  const R = 6371e3; // Radius bumi dalam meter
+  const R = 6371e3;
   const φ1 = (lat1 * Math.PI) / 180;
   const φ2 = (lat2 * Math.PI) / 180;
   const Δφ = ((lat2 - lat1) * Math.PI) / 180;

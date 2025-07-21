@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../config/prisma-client.js";
 import { CustomJwtPayload } from "../types/express.js";
+// import { getSubdistrictIdFromName } from "../utils/rajaongkir.js";
 
 // GET semua alamat milik user saat ini
 
@@ -35,48 +36,47 @@ export async function addAddress(req: Request, res: Response) {
   const {
     recipient,
     address,
+    destination,
+    destinationId,
     city,
     province,
-    destination,
     postalCode,
     isPrimary,
   } = req.body;
 
   if (
+    !userId ||
     !recipient ||
     !address ||
-    !city ||
     !destination ||
+    !destinationId ||
+    !city ||
     !province ||
     !postalCode
   ) {
-    res.status(400).json({ message: "All fields are required" });
-    return;
+    return res.status(400).json({ message: "All fields are required" });
   }
 
   try {
-    // Create Address first
+    // 1. Create Address
     const newAddress = await prisma.address.create({
       data: {
         address,
+        destination,
+        destinationId,
         city,
         province,
         postalCode,
-        destination,
       },
     });
 
-    // Create UserAddress with reference to Address
+    // 2. Create UserAddress linking to Address via addressId
     const userAddress = await prisma.userAddress.create({
       data: {
-        userId: userId,
+        userId,
         recipient,
         isPrimary,
-        Address: {
-          connect: {
-            id: newAddress.id,
-          },
-        },
+        addressId: newAddress.id,
       },
       include: {
         Address: true,
@@ -88,7 +88,7 @@ export async function addAddress(req: Request, res: Response) {
       data: userAddress,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Add address error:", error);
     res.status(500).json({ message: "Error creating address" });
   }
 }
@@ -96,8 +96,16 @@ export async function addAddress(req: Request, res: Response) {
 // Update address
 export async function updateAddress(req: Request, res: Response) {
   const { id } = req.params;
-  const { recipient, address, city, province, postalCode, isPrimary } =
-    req.body;
+  const {
+    recipient,
+    address,
+    destination,
+    destinationId,
+    city,
+    province,
+    postalCode,
+    isPrimary,
+  } = req.body;
 
   try {
     // Update the Address
@@ -105,6 +113,8 @@ export async function updateAddress(req: Request, res: Response) {
       where: { id },
       data: {
         address,
+        destination,
+        destinationId,
         city,
         province,
         postalCode,

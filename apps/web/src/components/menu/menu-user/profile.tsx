@@ -12,8 +12,7 @@ interface User {
   phoneNumber: string;
   isVerified: boolean;
 }
-
-export default function ProfilePage() {
+export default function ProfileSection() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
@@ -173,12 +172,15 @@ export default function ProfilePage() {
       {/* User Info */}
       <div className="max-w-md mx-auto pt-6 pb-6 bg-white shadow-lg rounded-lg p-6">
         <div className="flex flex-col items-center space-y-4">
+          {/* Avatar */}
           <div className="bg-gradient-to-tr from-teal-500 to-green-900 rounded-full p-4 shadow-md">
             <FaUser size={48} className="text-white" />
           </div>
+          {/* Name */}
           <h2 className="text-2xl font-semibold text-center">
             {user.firstName} {user.lastName}
           </h2>
+          {/* Username */}
           <p className="text-gray-500">@{user.username}</p>
         </div>
 

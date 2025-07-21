@@ -158,7 +158,21 @@ export default function MenuNavbarStoreAdmin({
                   <span>Inventory</span>
                 </Link>
                 <Link
-                  href="/store/orders"
+                  href="/dashboard/admin-store/discount"
+                  className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
+                >
+                  <MdDiscount />
+                  <span>Discount</span>
+                </Link>
+                <Link
+                  href="/dashboard/admin-store/inventory-management"
+                  className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
+                >
+                  <MdOutlineInventory />
+                  <span>Inventory</span>
+                </Link>
+                <Link
+                  href="/dashboard/admin-store/manage-order"
                   className="flex items-center space-x-2 hover:bg-green-700 px-2 py-1 rounded"
                 >
                   <FiShoppingCart />

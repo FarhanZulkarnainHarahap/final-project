@@ -10,7 +10,7 @@ export async function createStore(req: Request, res: Response) {
     postalCode,
     destination,
     latitude,
-    longtitude,
+    longitude,
   } = req.body;
 
   // Validasi input
@@ -22,7 +22,7 @@ export async function createStore(req: Request, res: Response) {
     !postalCode ||
     !destination ||
     latitude === undefined ||
-    longtitude === undefined
+    longitude === undefined
   ) {
     res.status(400).json({ message: "All fields are required." });
     return;
@@ -41,7 +41,7 @@ export async function createStore(req: Request, res: Response) {
       data: {
         storeId: store.id,
         latitude: parseFloat(latitude),
-        longtitude: parseFloat(longtitude),
+        longitude: parseFloat(longitude),
       },
     });
 

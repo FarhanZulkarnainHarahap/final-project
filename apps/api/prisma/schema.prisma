@@ -69,18 +69,20 @@ model UserAddress {
 
 model Address {
   id             String   @id @default(uuid())
-  userAddressId  String?
-  storeAddressId String?
-  destination    String
   address        String
+  destination    String
+  destinationId  Int?
   city           String
   province       String
   postalCode     String
+  storeAddressId String?
+  storeId        String?
+  isPrimary      Boolean  @default(false) // Optional: could be removed
   createdAt      DateTime @default(now())
 
-  StoreAddress StoreAddress? @relation(fields: [storeAddressId], references: [id])
-  UserAddress  UserAddress?  @relation(fields: [userAddressId], references: [id])
-  Order        Order[]
+  StoreAddress  StoreAddress? @relation(fields: [storeAddressId], references: [id])
+  UserAddresses UserAddress[] // <-- many userAddresses refer to this Address
+  Order         Order[]
 }
 
 model StoreUser {
@@ -94,10 +96,10 @@ model StoreUser {
 }
 
 model StoreAddress {
-  id         String @id @default(uuid())
-  storeId    String
-  latitude   Float
-  longtitude Float
+  id        String @id @default(uuid())
+  storeId   String
+  latitude  Float
+  longitude Float
 
   createdAt DateTime @default(now())
 
@@ -245,9 +247,19 @@ model InventoryJournal {
 enum OrderStatus {
   PENDING
   PAID
-  SHIPPED
   DELIVERED
   CANCELLED
+}
+
+enum PaymentMethod {
+  MIDTRANS
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
 }
 
 model Cart {
@@ -273,23 +285,43 @@ model CartItem {
   Product Product @relation(fields: [productId], references: [id])
 }
 
-model Order {
-  id            String      @id @default(uuid())
-  userId        String
-  orderNumber   String      @unique
-  status        OrderStatus @default(PENDING)
-  subTotal      Float
-  shippingTotal Float
-  totalPrice    Float
-  addressId     String
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+// model Payment {
+//   id            String        @id @default(uuid())
+//   orderId       String        @unique
+//   method        PaymentMethod
+//   status        PaymentStatus @default(PENDING)
+//   proofImageUrl String?
+//   verifiedById  String? // Admin user who verified it
+//   verifiedAt    DateTime?
+//   createdAt     DateTime      @default(now())
+//   updatedAt     DateTime      @updatedAt
 
-  Address            Address           @relation(fields: [addressId], references: [id])
+//   Order      Order @relation(fields: [orderId], references: [id])
+//   verifiedBy User? @relation(fields: [verifiedById], references: [id])
+// }
+
+model Order {
+  id              String      @id @default(uuid())
+  userId          String
+  orderNumber     String      @unique
+  status          OrderStatus @default(PENDING)
+  subTotal        Float
+  shippingTotal   Float
+  totalPrice      Float
+  paymentMethod   String
+  proofImageUrl   String?
+  shippingOptions Json
+  addressId       String
+  isDone          Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  Address            Address           @relation(fields: [addressId], references: [id], onDelete: Cascade)
   User               User              @relation(fields: [userId], references: [id])
   OrderItem          OrderItem[]
   InventoryJournal   InventoryJournal? @relation(fields: [inventoryJournalId], references: [id])
   inventoryJournalId String?
+  // Payment            Payment?
 }
 
 model OrderItem {
