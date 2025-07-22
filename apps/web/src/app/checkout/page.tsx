@@ -16,12 +16,12 @@ interface CartItem {
     image: string;
     price: number;
     weight: number;
+    imagePreview?: { imageUrl: string }[]; // Added imagePreview type
   };
 }
 
 interface Address {
   fullName: string;
-  // phone: string;
   address: string;
   city: string;
   province: string;
@@ -46,11 +46,21 @@ interface ShippingOption {
   serviceName: string;
 }
 
+interface ShippingMethod {
+  shipping_name: string;
+  service_name: string;
+  grandtotal: number;
+  etd: string;
+}
+
+interface ShippingCosts {
+  [key: string]: ShippingMethod[]; // This holds an object with string keys, each mapping to an array of ShippingMethod
+}
+
 export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [address, setAddress] = useState<Address>({
     fullName: "",
-    // phone: "",
     address: "",
     city: "",
     province: "",
@@ -62,9 +72,9 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
     null
   );
-  const [shippingId, setShippingId] = useState<string | null>(null);
-
-  const [shippingCosts, setShippingCosts] = useState<any | null>({});
+  const [shippingCosts, setShippingCosts] = useState<ShippingCosts | null>(
+    null
+  );
 
   const [selectedShippingCost, setSelectedShippingCost] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<"epayment" | "manual">(
@@ -76,34 +86,29 @@ export default function CheckoutPage() {
   const [selectedShippingOption, setSelectedShippingOption] =
     useState<ShippingOption | null>(null);
 
+  // Function to calculate shipping cost based on selected address and cart
   const calculateShippingCost = (selectedAddress: UserAddress) => {
-    console.log(selectedAddress);
-    let totalWeight = cartItems.reduce(
+    const totalWeight = cartItems.reduce(
       (sum, item) => sum + item.Product.weight * item.quantity,
       0
     );
 
-    let subtotal = cartItems.reduce(
-      (sum, item) => sum + parseFloat(item.Product.price) * item.quantity,
+    const subtotal = cartItems.reduce(
+      (sum, item) => sum + item.Product.price * item.quantity,
       0
     );
 
     const queryParams = new URLSearchParams({
       shipper_destination_id: "501", // your warehouse
-      receiver_destination_id: selectedAddress.Address?.[0]?.destinationId,
+      receiver_destination_id: selectedAddress.Address.destinationId,
       weight: totalWeight.toString(),
       item_value: subtotal.toString(),
       cod: "false",
     });
+
     const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
     fetch(`${baseUrl}/api/v1/rajaongkir/calculate?${queryParams}`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Response status: ${res.status}`);
-        } else {
-          return res.json();
-        }
-      })
+      .then((res) => res.json())
       .then((body) => {
         if (body) {
           setShippingCosts(body.data);
@@ -114,7 +119,7 @@ export default function CheckoutPage() {
       });
   };
 
-  /* -------------------- Fetch cart once on mount ------------------------- */
+  // Fetch cart items
   useEffect(() => {
     (async () => {
       try {
@@ -139,6 +144,7 @@ export default function CheckoutPage() {
     })();
   }, [router]);
 
+  // Fetch user addresses
   useEffect(() => {
     (async () => {
       try {
@@ -152,13 +158,12 @@ export default function CheckoutPage() {
         if (res.ok) {
           setUserAddresses(json);
 
-          // Optional: auto-select the primary address
+          // Auto-select primary address
           const primary = json.find((addr: UserAddress) => addr.isPrimary);
           if (primary) {
             setSelectedAddressId(primary.id);
             setAddress({
               fullName: primary.recipient,
-              // phone: "",
               address: primary.Address.address,
               city: primary.Address.city,
               province: primary.Address.province,
@@ -174,24 +179,7 @@ export default function CheckoutPage() {
     })();
   }, []);
 
-  // useEffect(() => {
-  //   (async () => {
-  //     try {
-  //       const res = await fetch(
-  //         "http://localhost:8000/api/v1/rajaongkir/shippingDetail",
-  //         {
-  //           credentials: "include",
-  //         }
-  //       );
-  //       const json = await res.json();
-  //       if (res.ok) setSelectedShippingOption(json);
-  //       else console.error("Failed to load shipping", json.message);
-  //     } catch (err) {
-  //       console.error("Error fetching shipping details:", err);
-  //     }
-  //   })();
-  // }, []);
-
+  // Load Midtrans snap.js script for payment
   useEffect(() => {
     const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_SANDBOX_CLIENT_KEY;
 
@@ -210,6 +198,7 @@ export default function CheckoutPage() {
     document.body.appendChild(script);
   }, []);
 
+  // Update selected address and calculate shipping cost when the address changes
   useEffect(() => {
     if (!selectedAddressId) return;
 
@@ -220,31 +209,27 @@ export default function CheckoutPage() {
     if (selectedAddress && cartItems.length > 0) {
       setAddress({
         fullName: selectedAddress.recipient,
-        // phone: "", // update if your data includes phone
-        address: selectedAddress.Address?.[0]?.address,
-        city: selectedAddress.Address?.[0]?.city,
-        province: selectedAddress.Address?.[0]?.province,
-        postalCode: selectedAddress.Address?.[0]?.postalCode,
+        address: selectedAddress.Address.address,
+        city: selectedAddress.Address.city,
+        province: selectedAddress.Address.province,
+        postalCode: selectedAddress.Address.postalCode,
       });
 
       calculateShippingCost(selectedAddress);
     }
   }, [selectedAddressId, userAddresses, cartItems]);
 
-  /* -------------------- Derived values ---------------------------------- */
   const subtotal = cartItems.reduce(
     (sum, item) => sum + item.Product.price * item.quantity,
     0
   );
-  // const shippingCost =
-  //   SHIPPING_OPTIONS.find((opt) => opt.id === shippingId)?.cost ?? 0;
   const grandTotal = subtotal + selectedShippingCost;
 
-  /* -------------------- Helpers ----------------------------------------- */
-
+  // Format currency in IDR (Rupiah)
   const formatRp = (n: number) =>
     n.toLocaleString("id-ID", { minimumFractionDigits: 2 });
 
+  // Ensure all address fields are filled
   const allAddressFilled = Object.values(address)
     .filter((f) => f != null)
     .every((v) => v.trim() !== "");
@@ -252,8 +237,9 @@ export default function CheckoutPage() {
   const handlePayNow = async () => {
     if (!allAddressFilled)
       return alert("Please complete your shipping address.");
-    if (!shippingId) return alert("Please select a shipping method.");
-    if (!manualPaymentProof && paymentMethod == "manual")
+    if (!selectedShippingOption)
+      return alert("Please select a shipping method.");
+    if (!manualPaymentProof && paymentMethod === "manual")
       return alert("Please upload your payment proof.");
 
     const selectedAddress = userAddresses.find(
@@ -261,7 +247,9 @@ export default function CheckoutPage() {
     );
 
     const formData = new FormData();
-    formData.append("paymentProof", manualPaymentProof);
+    if (manualPaymentProof) {
+      formData.append("paymentProof", manualPaymentProof);
+    }
     formData.append("address", JSON.stringify(selectedAddress));
     formData.append("shippingOptions", JSON.stringify(selectedShippingOption));
     formData.append("cartItems", JSON.stringify(cartItems));
@@ -273,32 +261,25 @@ export default function CheckoutPage() {
         {
           method: "POST",
           credentials: "include",
-          headers: {
-            // "Content-Type": "application/json",
-          },
           body: formData,
         }
       );
 
       const json = await res.json();
       if (res.ok) {
-        if (paymentMethod == "manual") router.push("/dashboard/user/my-orders");
+        if (paymentMethod === "manual")
+          router.push("/dashboard/user/my-orders");
         else {
-          console.log(window);
-          console.log(JSON.stringify(json));
           window.snap.pay(json.data.midtransTransaction?.token, {
             selectedPaymentType: "bca_va",
             onSuccess: function (result) {
-              console.log("success");
-              console.log(result);
+              console.log("success", result);
             },
             onPending: function (result) {
-              console.log("pending");
-              console.log(result);
+              console.log("pending", result);
             },
             onError: function (result) {
-              console.log("error");
-              console.log(result);
+              console.log("error", result);
             },
             onClose: function () {
               console.log(
@@ -317,7 +298,6 @@ export default function CheckoutPage() {
     }
   };
 
-  /* ---------------------------------------------------------------------- */
   return (
     <MenuNavbarUser>
       <section className="p-4 max-w-7xl mx-auto">
@@ -335,33 +315,29 @@ export default function CheckoutPage() {
               </tr>
             </thead>
             <tbody>
-              {cartItems.map((item) => {
-                // 👈 LOG HERE
-
-                return (
-                  <tr key={item.id} className="border-b ">
-                    <td className="p-2 flex items-center gap-2 ">
-                      {item.Product.imagePreview?.[0]?.imageUrl && (
-                        <Image
-                          src={item.Product.imagePreview?.[0]?.imageUrl}
-                          alt={item.Product.name}
-                          width={60}
-                          height={60}
-                          className="rounded"
-                        />
-                      )}
-                      <span>{item.Product.name}</span>
-                    </td>
-                    <td className="p-2 text-center">
-                      Rp. {formatRp(item.Product.price)}
-                    </td>
-                    <td className="p-2 text-center">{item.quantity}</td>
-                    <td className="p-2 text-center">
-                      Rp. {formatRp(item.Product.price * item.quantity)}
-                    </td>
-                  </tr>
-                );
-              })}
+              {cartItems.map((item) => (
+                <tr key={item.id} className="border-b">
+                  <td className="p-2 flex items-center gap-2 ">
+                    {item.Product.imagePreview?.[0]?.imageUrl && (
+                      <Image
+                        src={item.Product.imagePreview[0].imageUrl}
+                        alt={item.Product.title}
+                        width={60}
+                        height={60}
+                        className="rounded"
+                      />
+                    )}
+                    <span>{item.Product.title}</span>
+                  </td>
+                  <td className="p-2 text-center">
+                    Rp. {formatRp(item.Product.price)}
+                  </td>
+                  <td className="p-2 text-center">{item.quantity}</td>
+                  <td className="p-2 text-center">
+                    Rp. {formatRp(item.Product.price * item.quantity)}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -387,9 +363,6 @@ export default function CheckoutPage() {
                 <p>
                   <strong>Full name:</strong> {address.fullName}
                 </p>
-                {/* <p>
-                  <strong>Phone:</strong> {address.phone || "—"}
-                </p> */}
                 <p>
                   <strong>Address:</strong> {address.address}
                 </p>
@@ -404,45 +377,6 @@ export default function CheckoutPage() {
                 </p>
               </div>
             ) : null}
-
-            {/* <button
-              onClick={() => {
-                const selectedAddress = userAddresses.find(
-                  (s) => s.id === selectedAddressId
-                );
-
-                if (!selectedAddress) {
-                  console.warn("No address selected");
-                  return;
-                }
-
-                console.log(selectedAddress);
-
-                const queryParams = new URLSearchParams({
-                  shipper_destination_id: "501", // your warehouse
-                  receiver_destination_id:
-                    selectedAddress.Address.destinationId,
-                  weight: "1",
-                  item_value: "10000",
-                  cod: "false",
-                });
-
-                fetch(
-                  `${baseUrl}/api/v1/rajaongkir/calculate?${queryParams}`
-                )
-                  .then((res) => res.json())
-                  .then((body) => {
-                    console.log(body);
-                    setShippingCosts(body.data);
-                  })
-                  .catch((error) => {
-                    console.error("Shipping calculation failed:", error);
-                  });
-              }}
-              className="p-3 bg-green-600 text-white rounded-md"
-            >
-              <div>Calculate Shipping Cost</div>
-            </button> */}
           </div>
 
           {userAddresses.length > 0 && (
@@ -463,7 +397,6 @@ export default function CheckoutPage() {
                       setSelectedAddressId(address.id);
                       setAddress({
                         fullName: address.recipient,
-                        // phone: "", // update this if you have phone support
                         address: address.Address.address,
                         city: address.Address.city,
                         province: address.Address.province,
@@ -477,16 +410,15 @@ export default function CheckoutPage() {
                         name="selected-address"
                         value={address.id}
                         checked={selectedAddressId === address.id}
-                        onChange={() => {}} // handled by the parent <div> onClick
+                        onChange={() => {}}
                         className="mt-1"
                       />
                       <div>
                         <p className="font-semibold">{address.recipient}</p>
-                        <p>{address.Address?.[0]?.address}</p>
+                        <p>{address.Address.address}</p>
                         <p>
-                          {address.Address?.[0]?.city},{" "}
-                          {address.Address?.[0]?.province},{" "}
-                          {address.Address?.[0]?.postalCode}
+                          {address.Address.city}, {address.Address.province},{" "}
+                          {address.Address.postalCode}
                         </p>
                         <p className="text-sm">
                           {address.isPrimary
@@ -507,18 +439,18 @@ export default function CheckoutPage() {
             </div>
           )}
         </div>
+
         <div className="grid md:grid-cols-2 gap-8">
           {/* Shipping options & totals */}
           <div className="bg-gray-100 p-4 rounded h-fit md:col-span-2">
             <h2 className="text-lg font-semibold mb-4">Shipping Method</h2>
 
-            {Object.keys(shippingCosts).map((type) => {
-              const shippingMethods = shippingCosts[type];
-              console.log(shippingMethods);
-              return (
-                <div key={type} className="grid lg:grid-cols-2">
-                  {shippingMethods.map((shippingMethod) => {
-                    return (
+            {shippingCosts &&
+              Object.keys(shippingCosts).map((type) => {
+                const shippingMethods = shippingCosts[type];
+                return (
+                  <div key={type} className="grid lg:grid-cols-2">
+                    {shippingMethods.map((shippingMethod) => (
                       <div
                         key={
                           shippingMethod.shipping_name +
@@ -533,11 +465,6 @@ export default function CheckoutPage() {
                           className="mr-2"
                           value={shippingMethod.service_name}
                           onChange={() => {
-                            setShippingId(
-                              shippingMethod.shipping_name +
-                                "|" +
-                                shippingMethod.service_name
-                            );
                             setSelectedShippingCost(shippingMethod.grandtotal);
                             setSelectedShippingOption({
                               shippingName: shippingMethod.shipping_name,
@@ -545,10 +472,8 @@ export default function CheckoutPage() {
                             });
                           }}
                           checked={
-                            shippingId ===
-                            shippingMethod.shipping_name +
-                              "|" +
-                              shippingMethod.service_name
+                            selectedShippingOption?.serviceName ===
+                            shippingMethod.service_name
                           }
                         />
                         <div>
@@ -560,11 +485,10 @@ export default function CheckoutPage() {
                           </p>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
+                    ))}
+                  </div>
+                );
+              })}
 
             {/* Payment Method Selection */}
             <div className="mt-6">
@@ -608,29 +532,6 @@ export default function CheckoutPage() {
                 </div>
               )}
             </div>
-            {/* <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-2">Payment Method</h3>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2">
-                  <input type="radio" checked readOnly />
-                  Manual Bank Transfer
-                </label>
-              </div>
-
-              <div className="mt-4">
-                <label className="block mb-2 font-medium">
-                  Upload Payment Proof
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    setManualPaymentProof(e.target.files?.[0] || null)
-                  }
-                  className="block w-full border rounded p-2"
-                />
-              </div>
-            </div> */}
 
             {/* Totals */}
             <h3 className="text-lg font-semibold mb-2">Totals</h3>
@@ -641,7 +542,9 @@ export default function CheckoutPage() {
             <div className="flex justify-between mb-1">
               <span>Shipping</span>
               <span>
-                {shippingId ? `Rp. ${formatRp(selectedShippingCost)}` : "—"}
+                {selectedShippingCost
+                  ? `Rp. ${formatRp(selectedShippingCost)}`
+                  : "—"}
               </span>
             </div>
             <div className="flex justify-between border-t mt-2 pt-2 text-lg font-bold">
@@ -652,7 +555,7 @@ export default function CheckoutPage() {
             <button
               onClick={handlePayNow}
               className="bg-green-600 mt-4 w-full text-white py-2 rounded disabled:opacity-60"
-              disabled={!allAddressFilled || !shippingId}
+              disabled={!allAddressFilled || !selectedShippingOption}
             >
               Pay Now
             </button>
