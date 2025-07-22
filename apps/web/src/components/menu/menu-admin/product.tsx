@@ -65,17 +65,20 @@ export default function ProductAdminPage() {
     async function fetchProducts() {
       setLoading(true);
       try {
-        const res = await axios.get("http://localhost:8000/api/v1/products", {
-          params: {
-            page,
-            limit: 5,
-            search,
-            category,
-            sortBy,
-            sortOrder,
-          },
-          withCredentials: true,
-        });
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/products`,
+          {
+            params: {
+              page,
+              limit: 5,
+              search,
+              category,
+              sortBy,
+              sortOrder,
+            },
+            withCredentials: true,
+          }
+        );
 
         const productsData = res.data.data;
 
@@ -83,9 +86,10 @@ export default function ProductAdminPage() {
         const productsWithStores = await Promise.all(
           productsData.map(async (product: Product) => {
             try {
+              const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
               const detailRes = await axios.get<{
                 data: ProductDetailResponse;
-              }>(`http://localhost:8000/api/v1/products/${product.id}`, {
+              }>(`${baseUrl}/api/v1/products/${product.id}`, {
                 params: { includeAllStores: "true" },
                 withCredentials: true,
               });
@@ -131,9 +135,12 @@ export default function ProductAdminPage() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const res = await axios.get("http://localhost:8000/api/v1/categories", {
-          withCredentials: true,
-        });
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/categories`,
+          {
+            withCredentials: true,
+          }
+        );
         setCategories(res.data.data);
       } catch (err) {
         console.error("Failed to fetch categories", err);
@@ -152,12 +159,10 @@ export default function ProductAdminPage() {
     if (!productToDelete) return;
 
     try {
-      await axios.delete(
-        `http://localhost:8000/api/v1/products/${productToDelete.id}`,
-        {
-          withCredentials: true,
-        }
-      );
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+      await axios.delete(`${baseUrl}/api/v1/products/${productToDelete.id}`, {
+        withCredentials: true,
+      });
       alert("Product deleted successfully.");
       setProducts((prev) => prev.filter((p) => p.id !== productToDelete.id));
     } catch (error) {

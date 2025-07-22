@@ -17,9 +17,12 @@ export default function DashboardProducts() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const res = await fetch("http://localhost:8000/api/v1/products", {
-          credentials: "include",
-        });
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/products`,
+          {
+            credentials: "include",
+          }
+        );
         const data = await res.json();
         console.log("API Response:", data);
 

@@ -73,7 +73,7 @@ export default function CreateStoreSection({
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/v1/stores/super-admin",
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/stores/super-admin`,
         {
           method: "POST",
           headers: {
@@ -113,8 +113,9 @@ export default function CreateStoreSection({
 
   const fetchDestinationSuggestions = async (keyword: string) => {
     try {
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
       const res = await fetch(
-        `http://localhost:8000/api/v1/rajaongkir/search?keyword=${encodeURIComponent(
+        `${baseUrl}/api/v1/rajaongkir/search?keyword=${encodeURIComponent(
           keyword
         )}`
       );

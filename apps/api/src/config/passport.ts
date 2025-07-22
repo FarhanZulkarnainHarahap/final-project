@@ -8,15 +8,15 @@ import prisma from "./prisma-client.js";
 
 dotenv.config(); // ⛳ WAJIB agar .env bisa digunakan
 
-console.log("GOOGLE_CLIENT_ID", process.env.GOOGLE_CLIENT_ID);
-console.log("callbackURL", "http://localhost:8000/api/v1/auth/google/callback");
-
+// console.log("GOOGLE_CLIENT_ID", process.env.GOOGLE_CLIENT_ID);
+// console.log("callbackURL", "http://localhost:8000/api/v1/auth/google/callback");
+const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: "http://localhost:8000/api/v1/auth/google/callback",
+      callbackURL: `${baseUrl}/api/v1/auth/google/callback`,
     },
     async (accessToken, _refreshToken, _profile, done) => {
       try {

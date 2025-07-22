@@ -28,7 +28,7 @@ export default function ManageOrdersPage() {
   ) => {
     try {
       const res = await fetch(
-        "http://localhost:8000/api/v1/admin/orders/update",
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/admin/orders/update`,
         {
           method: "PATCH",
           headers: {
@@ -61,9 +61,12 @@ export default function ManageOrdersPage() {
   useEffect(() => {
     async function fetchOrders() {
       try {
-        const res = await fetch("http://localhost:8000/api/v1/admin/orders", {
-          credentials: "include",
-        });
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/admin/orders`,
+          {
+            credentials: "include",
+          }
+        );
         const json = await res.json();
         if (res.ok) {
           setOrders(json.data);

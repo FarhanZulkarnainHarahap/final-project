@@ -13,13 +13,15 @@ interface StoreAdmin extends StoreAdminInput {
   createdAt?: string;
 }
 
-export const API_BASE_URL = "http://localhost:8000/api/v1/admin";
+// export const API_BASE_URL = "http://localhost:8000/api/v1/admin";
 
 /**
  * Ambil semua Store Admin
  */
 export async function getAllStoreAdmins(): Promise<StoreAdmin[]> {
-  const res = await fetch(API_BASE_URL, { cache: "no-store" });
+  const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/admin`, {
+    cache: "no-store",
+  });
   if (!res.ok) throw new Error("Failed to fetch store admins");
   return res.json();
 }
@@ -30,7 +32,7 @@ export async function getAllStoreAdmins(): Promise<StoreAdmin[]> {
 export async function createStoreAdmin(
   data: StoreAdminInput
 ): Promise<StoreAdmin> {
-  const res = await fetch(API_BASE_URL, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/admin`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -46,11 +48,14 @@ export async function updateStoreAdmin(
   id: string,
   data: StoreAdminInput
 ): Promise<StoreAdmin> {
-  const res = await fetch(`${API_BASE_URL}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/admin/${id}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  );
   if (!res.ok) throw new Error("Failed to update store admin");
   return res.json();
 }
@@ -61,9 +66,12 @@ export async function updateStoreAdmin(
 export async function deleteStoreAdmin(
   id: string
 ): Promise<{ message: string }> {
-  const res = await fetch(`${API_BASE_URL}/${id}`, {
-    method: "DELETE",
-  });
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/admin/${id}`,
+    {
+      method: "DELETE",
+    }
+  );
   if (!res.ok) throw new Error("Failed to delete store admin");
   return res.json();
 }

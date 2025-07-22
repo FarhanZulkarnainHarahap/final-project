@@ -35,7 +35,7 @@ export default function ProfileSection() {
       setLoading(true); // Set loading to true while fetching data
       try {
         const res = await fetch(
-          "http://localhost:8000/api/v1/user/current-user",
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/user/current-user`,
           {
             credentials: "include", // Send the access token cookie
           }
@@ -64,7 +64,7 @@ export default function ProfileSection() {
 
     try {
       const res = await fetch(
-        "http://localhost:8000/api/v1/auth/verify-email",
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/verify-email`,
         {
           method: "POST",
           credentials: "include",
@@ -124,7 +124,7 @@ export default function ProfileSection() {
     e.preventDefault();
     try {
       const res = await fetch(
-        "http://localhost:8000/api/v1/user/current-user",
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/user/current-user`,
         {
           method: "PUT",
           headers: {

@@ -22,9 +22,12 @@ export default function StorePage() {
   useEffect(() => {
     async function fetchStores() {
       try {
-        const res = await axios.get("http://localhost:8000/api/v1/stores", {
-          withCredentials: true,
-        });
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/stores`,
+          {
+            withCredentials: true,
+          }
+        );
         setStores(res.data.data);
       } catch (err) {
         console.error("Error fetching stores:", err);

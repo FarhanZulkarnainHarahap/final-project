@@ -183,7 +183,7 @@ export default function ProductPage() {
     const fetchProvinces = async () => {
       try {
         const res = await fetch(
-          "http://localhost:8000/api/v1/addresses/provinces"
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/addresses/provinces`
         );
         const data = await res.json();
         setProvinces(data.provinces || []);

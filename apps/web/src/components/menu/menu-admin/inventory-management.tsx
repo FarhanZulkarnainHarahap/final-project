@@ -62,9 +62,12 @@ export default function InventoryHistoryPage() {
 
   const fetchStores = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/stores", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/stores`,
+        {
+          credentials: "include",
+        }
+      );
       const result = await res.json();
       setStores(result.data || []);
     } catch (error) {
@@ -80,11 +83,10 @@ export default function InventoryHistoryPage() {
       if (selectedAction) params.append("action", selectedAction);
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
-
-      const res = await fetch(
-        `http://localhost:8000/api/v1/inventory/history?${params}`,
-        { credentials: "include" }
-      );
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+      const res = await fetch(`${baseUrl}/api/v1/inventory/history?${params}`, {
+        credentials: "include",
+      });
 
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const result: HistoryResponse = await res.json();

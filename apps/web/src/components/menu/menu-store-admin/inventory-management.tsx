@@ -65,9 +65,12 @@ export default function StoreInventoryHistoryPage() {
 
   const fetchUserStore = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/auth/profile", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/profile`,
+        {
+          credentials: "include",
+        }
+      );
       if (!res.ok) throw new Error("Failed to fetch user profile");
       const result: UserProfileResponse = await res.json();
       const stores = result.user?.Store;
@@ -81,8 +84,9 @@ export default function StoreInventoryHistoryPage() {
   const fetchProducts = async () => {
     if (!userStore) return;
     try {
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
       const res = await fetch(
-        `http://localhost:8000/api/v1/inventory?storeId=${userStore.id}`,
+        `${baseUrl}/api/v1/inventory?storeId=${userStore.id}`,
         { credentials: "include" }
       );
       if (!res.ok) throw new Error("Failed to fetch products");
@@ -108,13 +112,10 @@ export default function StoreInventoryHistoryPage() {
       if (selectedProduct) params.append("productId", selectedProduct);
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
-
-      const res = await fetch(
-        `http://localhost:8000/api/v1/inventory/history?${params}`,
-        {
-          credentials: "include",
-        }
-      );
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+      const res = await fetch(`${baseUrl}/api/v1/inventory/history?${params}`, {
+        credentials: "include",
+      });
 
       if (!res.ok) throw new Error("Fetch failed");
       const result: HistoryResponse = await res.json();

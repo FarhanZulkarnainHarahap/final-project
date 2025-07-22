@@ -43,7 +43,7 @@ export default function StoreAdminPage() {
       setLoading(true);
       try {
         const res = await axios.get(
-          "http://localhost:8000/api/v1/user/store-admins",
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/user/store-admins`,
           {
             withCredentials: true,
           }
@@ -72,12 +72,10 @@ export default function StoreAdminPage() {
     if (!adminToDelete) return;
 
     try {
-      await axios.delete(
-        `http://localhost:8000/api/v1/user/${adminToDelete.id}`,
-        {
-          withCredentials: true,
-        }
-      );
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+      await axios.delete(`${baseUrl}/api/v1/user/${adminToDelete.id}`, {
+        withCredentials: true,
+      });
       alert("Store admin deleted successfully.");
       setStoreAdmins((prev) =>
         prev.filter((admin) => admin.id !== adminToDelete.id)

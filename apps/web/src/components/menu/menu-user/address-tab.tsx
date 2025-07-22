@@ -44,10 +44,13 @@ export default function AddressTab() {
   const getAllAddress = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:8000/api/v1/addresses", {
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/addresses`,
+        {
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
       const data = await res.json();
       setAddresses(data);
     } catch (err) {
@@ -64,7 +67,8 @@ export default function AddressTab() {
 
   const handleSetPrimary = async (id: string) => {
     try {
-      await fetch(`http://localhost:8000/api/v1/addresses/${id}/set-primary`, {
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+      await fetch(`${baseUrl}/api/v1/addresses/${id}/set-primary`, {
         method: "PATCH",
         credentials: "include",
       });
@@ -79,7 +83,8 @@ export default function AddressTab() {
     if (!confirm("Yakin ingin menghapus alamat ini?")) return;
 
     try {
-      await fetch(`http://localhost:8000/api/v1/addresses/${id}`, {
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+      await fetch(`${baseUrl}/api/v1/addresses/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -91,9 +96,12 @@ export default function AddressTab() {
   };
   const fetchAddresses = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/addresses", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/addresses`,
+        {
+          credentials: "include",
+        }
+      );
       const data = await res.json();
 
       if (res.ok) {
@@ -111,8 +119,9 @@ export default function AddressTab() {
 
   const fetchDestinationSuggestions = async (keyword: string) => {
     try {
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
       const res = await fetch(
-        `http://localhost:8000/api/v1/rajaongkir/search?keyword=${encodeURIComponent(keyword)}`
+        `${baseUrl}/api/v1/rajaongkir/search?keyword=${encodeURIComponent(keyword)}`
       );
       const data = await res.json();
 
@@ -142,14 +151,17 @@ export default function AddressTab() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/addresses", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newAddress),
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/addresses`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newAddress),
+          credentials: "include",
+        }
+      );
 
       if (response.ok) {
         const addedAddress = await response.json();

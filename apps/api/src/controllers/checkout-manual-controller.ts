@@ -12,6 +12,7 @@ const snap = new MidtransClient.Snap({
 export const handleManualCheckout = async (req: Request, res: Response) => {
   try {
     //const userId = req.user.id;
+    const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
     const user = req.user;
 
     console.log(JSON.stringify(user));
@@ -53,7 +54,7 @@ export const handleManualCheckout = async (req: Request, res: Response) => {
     console.log(JSON.stringify(parsedShipping));
     const queryParams = new URLSearchParams({
       shipper_destination_id: "501", // your warehouse
-      receiver_destination_id: parsedAddress.Address.destinationId,
+      receiver_destination_id: parsedAddress.Address?.[0]?.destinationId,
       weight: totalWeight.toString(),
       item_value: subtotal.toString(),
       cod: "false",
@@ -61,7 +62,7 @@ export const handleManualCheckout = async (req: Request, res: Response) => {
     console.log(JSON.stringify(queryParams));
 
     const response = await fetch(
-      `http://localhost:8000/api/v1/rajaongkir/calculate?${queryParams}`
+      `${baseUrl}/api/v1/rajaongkir/calculate?${queryParams}`
     );
     const result = await response.json();
 
@@ -102,8 +103,6 @@ export const handleManualCheckout = async (req: Request, res: Response) => {
     );
     const totalPrice = subTotal + shippingCost;
 
-    console.log("ADDRESSID" + parsedAddress.addressId);
-
     console.log(totalPrice);
 
     let orderNumber = `ORD-${Date.now()}`;
@@ -116,7 +115,7 @@ export const handleManualCheckout = async (req: Request, res: Response) => {
         totalPrice,
         shippingOptions: parsedShipping,
         proofImageUrl: uploadRes?.secure_url,
-        addressId: parsedAddress.addressId,
+        addressId: parsedAddress.Address?.[0]?.id,
         userId: req.user.id,
         paymentMethod: paymentMethod,
         OrderItem: {

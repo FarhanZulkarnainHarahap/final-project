@@ -41,12 +41,10 @@ export default function StoreDetailPage({
     async function getStoreById() {
       try {
         const { storeId } = params;
-        const res = await fetch(
-          `http://localhost:8000/api/v1/stores/${storeId}`,
-          {
-            credentials: "include",
-          }
-        );
+        const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+        const res = await fetch(`${baseUrl}/api/v1/stores/${storeId}`, {
+          credentials: "include",
+        });
         const data = await res.json();
         setStore(data.data);
       } catch (err) {

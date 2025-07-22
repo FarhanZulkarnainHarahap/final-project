@@ -40,7 +40,7 @@ export default function StoreAdminProductsPage() {
     async function fetchUserStore() {
       try {
         const res = await axios.get(
-          "http://localhost:8000/api/v1/auth/profile",
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/profile`,
           {
             withCredentials: true,
           }
@@ -64,9 +64,12 @@ export default function StoreAdminProductsPage() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const res = await axios.get("http://localhost:8000/api/v1/categories", {
-          withCredentials: true,
-        });
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/categories`,
+          {
+            withCredentials: true,
+          }
+        );
         setCategories(res.data.data || []);
       } catch (error) {
         console.error("Failed to fetch categories", error);
@@ -82,7 +85,7 @@ export default function StoreAdminProductsPage() {
       setLoading(true);
       try {
         const res = await axios.get(
-          "http://localhost:8000/api/v1/products/by-store",
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/products/by-store`,
           {
             params: {
               storeId: userStore.id,

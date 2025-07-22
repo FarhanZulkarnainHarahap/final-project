@@ -7,7 +7,7 @@ export default function SignOut() {
   const router = useRouter();
   async function handleClick() {
     try {
-      await fetch("http://localhost:8000/api/v1/auth/logout", {
+      await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/logout`, {
         method: "DELETE",
         credentials: "include",
       });

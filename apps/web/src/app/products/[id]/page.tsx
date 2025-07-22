@@ -19,6 +19,7 @@ interface ProductType {
   price: number;
   stock: number;
   imagePreview: [{ imageUrl: string }];
+  storeId: string;
   Discount?: DiscountType[];
 }
 
@@ -91,8 +92,8 @@ export default function ProductCatalogId({
         const lat = localStorage.getItem("lat");
         const lng = localStorage.getItem("lng");
         const province = localStorage.getItem("province");
-
-        let url = `http://localhost:8000/api/v1/products/${id}`;
+        const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+        let url = `${baseUrl}/api/v1/products/${id}`;
         const query = new URLSearchParams();
 
         if (lat && lng) {
@@ -119,6 +120,7 @@ export default function ProductCatalogId({
           imagePreview: raw.imagePreview ?? [],
           stock,
           Discount: raw.Discount ?? [],
+          storeId: storeProduct.storeId,
         };
 
         if (isMounted) setProduct(normalized);
@@ -141,11 +143,15 @@ export default function ProductCatalogId({
   const handleAddToCart = async () => {
     if (!product) return;
     try {
-      await fetch("http://localhost:8000/api/v1/cart", {
+      await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/cart`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ productId: product.id, quantity: qty }),
+        body: JSON.stringify({
+          productId: product.id,
+          quantity: qty,
+          storeId: product.storeId,
+        }),
       });
       setNotification("✅ Successfully added to cart!");
       setTimeout(() => setNotification(null), 3000);

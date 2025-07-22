@@ -13,6 +13,7 @@ export async function addAddress(req: Request, res: Response) {
     destination,
     postalCode,
     isPrimary,
+    destinationId,
   } = req.body;
 
   if (
@@ -21,6 +22,7 @@ export async function addAddress(req: Request, res: Response) {
     !city ||
     !destination ||
     !province ||
+    !destinationId ||
     !postalCode
   ) {
     res.status(400).json({ message: "All fields are required" });
@@ -32,10 +34,11 @@ export async function addAddress(req: Request, res: Response) {
     const newAddress = await prisma.address.create({
       data: {
         address,
+        destination,
+        destinationId,
         city,
         province,
         postalCode,
-        destination,
       },
     });
 

@@ -20,9 +20,12 @@ export default function StoreHomePage() {
   useEffect(() => {
     const fetchstores = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/v1/stores", {
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/stores`,
+          {
+            cache: "no-store",
+          }
+        );
         const json = await res.json();
         setstores(json.data || []);
       } catch (error) {

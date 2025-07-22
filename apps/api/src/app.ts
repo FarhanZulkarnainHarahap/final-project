@@ -83,6 +83,15 @@ app.get("/api/v1/health", async (_req: Request, res: Response) => {
   res.status(200).json({ message: "API running" });
 });
 
+app.get("/confirm-email-view", (req: Request, res: Response) => {
+  const token = req.query.token as string; // you can also get this from database/session if needed
+
+  res.render("confirm-email", {
+    token,
+    apiBaseUrl: process.env.NEXT_PUBLIC_DOMAIN,
+  });
+});
+
 app.listen(PORT, () => {
   console.info(`🚀 Server is running on http://localhost:${PORT}`);
 });

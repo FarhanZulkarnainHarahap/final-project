@@ -23,9 +23,12 @@ export default function DiscountManagement() {
   // Fetch discounts
   const fetchDiscounts = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/v1/discounts", {
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/discounts`,
+        {
+          credentials: "include",
+        }
+      );
       if (response.ok) {
         const data = await response.json();
         setDiscounts(data.data || []);
@@ -44,13 +47,11 @@ export default function DiscountManagement() {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `http://localhost:8000/api/v1/discounts/${id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+      const response = await fetch(`${baseUrl}/api/v1/discounts/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
       if (response.ok) {
         fetchDiscounts();

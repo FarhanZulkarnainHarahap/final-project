@@ -16,7 +16,7 @@ export default function ResetPasswordRequestForm() {
 
     try {
       const res = await fetch(
-        "http://localhost:8000/api/v1/auth/reset-password",
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/reset-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -75,7 +75,7 @@ export default function ResetPasswordRequestForm() {
 
         <div className="flex justify-center gap-4">
           <a
-            href="http://localhost:8000/api/v1/auth/google"
+            href={`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/google`}
             className="bg-white p-2 rounded-full hover:shadow-md transition"
           >
             <FcGoogle size={24} />

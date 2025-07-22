@@ -32,9 +32,12 @@ export default function CreateStoreAdminPage() {
       setLoading(true);
       try {
         // Fetch available stores - adjust endpoint as needed
-        const response = await fetch("http://localhost:8000/api/v1/stores", {
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/stores`,
+          {
+            credentials: "include",
+          }
+        );
         if (response.ok) {
           const data = await response.json();
           setStores(data.data || []);
@@ -81,7 +84,7 @@ export default function CreateStoreAdminPage() {
       };
 
       const response = await fetch(
-        "http://localhost:8000/api/v1/user/store-admins",
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/user/store-admins`,
         {
           method: "POST",
           headers: {

@@ -56,7 +56,6 @@ export async function addAddress(req: Request, res: Response) {
   ) {
     return res.status(400).json({ message: "All fields are required" });
   }
-
   try {
     // 1. Create Address
     const newAddress = await prisma.address.create({

@@ -39,13 +39,13 @@ export default function ProductListPage() {
     async function fetchData() {
       try {
         const categoriesRes = await axios.get(
-          "http://localhost:8000/api/v1/categories",
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/categories`,
           { withCredentials: true }
         );
         setCategories(categoriesRes.data.data);
 
         const storesRes = await axios.get(
-          "http://localhost:8000/api/v1/stores",
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/stores`,
           { withCredentials: true }
         );
         setStores(storesRes.data.data);
@@ -86,10 +86,14 @@ export default function ProductListPage() {
       if (imagePreviewFile) formData.append("imagePreview", imagePreviewFile);
       if (imageContentFile) formData.append("imageContent", imageContentFile);
 
-      await axios.post("http://localhost:8000/api/v1/products", formData, {
-        withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/products`,
+        formData,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
       alert("Product created successfully.");
       router.push("/dashboard/admin/product");

@@ -283,11 +283,11 @@ export async function resetPassword(
       "utf-8"
     );
     const compiledTemplate = handlebars.compile(templateSource);
-
+    const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
     // Menghasilkan konten email dengan link reset dan link resend
     const htmlTemplate = compiledTemplate({
-      resetLink: `http://localhost:8000/reset-password?token=${resetToken}`, // Link reset password
-      resendLink: `http://localhost:8000/request-reset`, // Link resend reset request
+      resetLink: `${baseUrl}/reset-password?token=${resetToken}`, // Link reset password
+      resendLink: `${baseUrl}/request-reset`, // Link resend reset request
       companyName: "YourCompany", // Nama perusahaan
       currentYear: new Date().getFullYear(),
     });

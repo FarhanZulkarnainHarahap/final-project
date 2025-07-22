@@ -72,20 +72,17 @@ export default function EditProductPage() {
     async function fetchAllData() {
       try {
         setLoading(true);
-
+        const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
         // Fetch product, categories, and stores in parallel
         const [productRes, categoriesRes, storesRes] = await Promise.all([
-          axios.get(
-            `http://localhost:8000/api/v1/products/${id}?includeAllStores=true`,
-            {
-              // ← TAMBAHAN parameter
-              withCredentials: true,
-            }
-          ),
-          axios.get("http://localhost:8000/api/v1/categories", {
+          axios.get(`${baseUrl}/api/v1/products/${id}?includeAllStores=true`, {
+            // ← TAMBAHAN parameter
             withCredentials: true,
           }),
-          axios.get("http://localhost:8000/api/v1/stores", {
+          axios.get(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/categories`, {
+            withCredentials: true,
+          }),
+          axios.get(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/stores`, {
             withCredentials: true,
           }),
         ]);
@@ -189,18 +186,14 @@ export default function EditProductPage() {
       if (imageContentFile) {
         formData.append("imageContent", imageContentFile);
       }
-
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
       // Send update request
-      await axios.patch(
-        `http://localhost:8000/api/v1/products/${id}`,
-        formData,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      await axios.patch(`${baseUrl}/api/v1/products/${id}`, formData, {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       alert("Product updated successfully!");
       router.push("/dashboard/admin/product");

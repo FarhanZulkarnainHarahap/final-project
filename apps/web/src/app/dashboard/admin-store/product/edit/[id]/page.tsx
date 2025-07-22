@@ -53,7 +53,7 @@ export default function EditStockPage() {
     async function fetchUserStore() {
       try {
         const res = await axios.get<UserProfileResponse>(
-          "http://localhost:8000/api/v1/auth/profile",
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/profile`,
           { withCredentials: true }
         );
         const stores = res.data.user?.Store;
@@ -79,8 +79,9 @@ export default function EditStockPage() {
 
       setLoading(true);
       try {
+        const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
         const res = await axios.get<ProductResponse>(
-          `http://localhost:8000/api/v1/products/${productId}?includeAllStores=true`,
+          `${baseUrl}/api/v1/products/${productId}?includeAllStores=true`,
           { withCredentials: true }
         );
 
@@ -133,12 +134,10 @@ export default function EditStockPage() {
           },
         ])
       );
-
-      await axios.patch(
-        `http://localhost:8000/api/v1/products/${productId}`,
-        formData,
-        { withCredentials: true }
-      );
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+      await axios.patch(`${baseUrl}/api/v1/products/${productId}`, formData, {
+        withCredentials: true,
+      });
 
       alert("Stock updated successfully!");
       router.push("/dashboard/admin-store/product");

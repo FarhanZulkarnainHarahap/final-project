@@ -32,9 +32,12 @@ export default function MyOrdersSection() {
   useEffect(() => {
     async function fetchOrders() {
       try {
-        const res = await fetch("http://localhost:8000/api/v1/my-orders", {
-          credentials: "include",
-        });
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/my-orders`,
+          {
+            credentials: "include",
+          }
+        );
         const json = await res.json();
         setOrders(json.data);
       } catch (error) {
@@ -130,8 +133,9 @@ export default function MyOrdersSection() {
                 <button
                   onClick={async () => {
                     try {
+                      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
                       const res = await fetch(
-                        `http://localhost:8000/api/v1/my-orders/complete`,
+                        `${baseUrl}/api/v1/my-orders/complete`,
                         {
                           method: "PATCH",
                           headers: {

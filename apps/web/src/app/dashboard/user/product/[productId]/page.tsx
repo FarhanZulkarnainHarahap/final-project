@@ -39,10 +39,10 @@ export default function ProductCatalogId({
     async function getProduct() {
       try {
         const { productId } = await params;
-        const res = await fetch(
-          `http://localhost:8000/api/v1/products/${productId}`,
-          { credentials: "include" }
-        );
+        const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+        const res = await fetch(`${baseUrl}/api/v1/products/${productId}`, {
+          credentials: "include",
+        });
         const json = await res.json();
         if (isMounted) setProduct(json?.data);
       } catch (err) {
@@ -72,7 +72,7 @@ export default function ProductCatalogId({
   const handleAddToCart = async () => {
     if (!product) return;
     try {
-      await fetch("http://localhost:8000/api/v1/cart", {
+      await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/cart`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

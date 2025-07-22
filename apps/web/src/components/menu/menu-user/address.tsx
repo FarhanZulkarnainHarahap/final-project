@@ -29,10 +29,13 @@ export default function AddressPageSection() {
   const getAllAddress = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/addresses", {
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/addresses`,
+        {
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
       const data: AddressData[] = await res.json(); // Type the response
       setAddresses(data); // Update the state with fetched addresses
     } catch (err) {
@@ -48,9 +51,11 @@ export default function AddressPageSection() {
   }, []); // Fetch on mount
 
   // Set a specific address as primary
+
+  const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
   const handleSetPrimary = async (id: string) => {
     try {
-      await fetch(`http://localhost:8000/api/v1/addresses/${id}/primary`, {
+      await fetch(`${baseUrl}/api/v1/addresses/${id}/primary`, {
         method: "PUT",
         credentials: "include",
       });
@@ -67,7 +72,7 @@ export default function AddressPageSection() {
     if (!confirm("Yakin ingin menghapus alamat ini?")) return;
 
     try {
-      await fetch(`http://localhost:8000/api/v1/addresses/${id}`, {
+      await fetch(`${baseUrl}/api/v1/addresses/${id}`, {
         method: "DELETE",
         credentials: "include",
       });

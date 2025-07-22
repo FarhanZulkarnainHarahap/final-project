@@ -33,7 +33,7 @@ export default function CreateDiscount() {
     const fetchUserStore = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8000/api/v1/auth/profile",
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/profile`,
           {
             credentials: "include",
           }
@@ -58,7 +58,9 @@ export default function CreateDiscount() {
       if (!userStore?.id) return;
 
       try {
-        const url = new URL("http://localhost:8000/api/v1/products/by-store");
+        const url = new URL(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/products/by-store`
+        );
         url.searchParams.append("storeId", userStore.id);
 
         const response = await fetch(url.toString(), {
@@ -125,12 +127,15 @@ export default function CreateDiscount() {
         endDate: new Date(form.endDate).toISOString(),
       };
 
-      const response = await fetch("http://localhost:8000/api/v1/discounts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(requestData),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_DOMAIN}0/api/v1/discounts`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(requestData),
+        }
+      );
 
       if (response.ok) {
         alert("Discount created successfully!");

@@ -27,9 +27,12 @@ export default function ProductCatalog() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/v1/products", {
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/products`,
+          {
+            cache: "no-store",
+          }
+        );
         const json = await res.json();
         setProducts(json.data || []);
       } catch (error) {

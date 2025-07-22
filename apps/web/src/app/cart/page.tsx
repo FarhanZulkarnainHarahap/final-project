@@ -21,12 +21,15 @@ export default function CartPage() {
   useEffect(() => {
     async function fetchCart() {
       try {
-        const res = await fetch("http://localhost:8000/api/v1/cart/index", {
-          credentials: "include", // important if you're using cookies
-          // headers: {
-          //   "Content-Type": "application/json",
-          // },
-        });
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/cart/index`,
+          {
+            credentials: "include", // important if you're using cookies
+            // headers: {
+            //   "Content-Type": "application/json",
+            // },
+          }
+        );
 
         //check for unauthorized
         if (res.status === 401 || res.status === 403) {
@@ -54,7 +57,8 @@ export default function CartPage() {
     );
 
     try {
-      await fetch(`http://localhost:8000/api/v1/cart/${id}`, {
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+      await fetch(`${baseUrl}/api/v1/cart/${id}`, {
         method: "PATCH",
         credentials: "include",
         headers: {
@@ -71,7 +75,8 @@ export default function CartPage() {
     setCartItems((items) => items.filter((item) => item.id !== id));
 
     try {
-      await fetch(`http://localhost:8000/api/v1/cart/${id}`, {
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+      await fetch(`${baseUrl}/api/v1/cart/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -120,7 +125,10 @@ export default function CartPage() {
                   </td>
                   <td className="p-2 flex items-center gap-2">
                     <Image
-                      src={item.Product.imagePreview}
+                      src={
+                        item.Product?.imagePreview?.[0]?.imageUrl ??
+                        "/default.jpg"
+                      }
                       alt={item.Product.name}
                       width={60}
                       height={60}

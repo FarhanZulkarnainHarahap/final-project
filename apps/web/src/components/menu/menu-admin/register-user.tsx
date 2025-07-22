@@ -19,7 +19,9 @@ export default function RegisterUser() {
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const res = await fetch("http://localhost:8000/api/v1/user");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/user`
+        );
         const data = await res.json();
         console.log("API Response:", data);
 

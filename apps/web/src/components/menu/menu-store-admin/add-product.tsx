@@ -42,11 +42,14 @@ export default function AddProductPage({
         });
       }
 
-      const res = await fetch("http://localhost:8000/api/v1/products", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/products`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        }
+      );
 
       if (!res.ok) {
         const err = await res.json();

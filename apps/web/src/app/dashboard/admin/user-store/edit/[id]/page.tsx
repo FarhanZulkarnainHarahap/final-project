@@ -49,8 +49,9 @@ export default function EditStoreAdminPage({
       setLoading(true);
       try {
         // Fetch store admin data
+        const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
         const adminResponse = await fetch(
-          `http://localhost:8000/api/v1/user/store-admins/${id}`,
+          `${baseUrl}/api/v1/user/store-admins/${id}`,
           {
             credentials: "include",
           }
@@ -85,7 +86,7 @@ export default function EditStoreAdminPage({
 
         // Fetch available stores
         const storesResponse = await fetch(
-          "http://localhost:8000/api/v1/stores",
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/stores`,
           {
             credentials: "include",
           }
@@ -143,9 +144,9 @@ export default function EditStoreAdminPage({
       };
 
       console.log("Sending payload:", payload); // Debug log
-
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
       const response = await fetch(
-        `http://localhost:8000/api/v1/user/store-admins/${id}`,
+        `${baseUrl}/api/v1/user/store-admins/${id}`,
         {
           method: "PUT",
           headers: {

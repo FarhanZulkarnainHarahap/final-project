@@ -24,7 +24,16 @@ export async function getCart(req: Request, res: Response) {
 
     const items = await prisma.cartItem.findMany({
       where: { cartId: cart.id },
-      include: { Product: true },
+      include: {
+        Product: {
+          include: {
+            ProductCategory: { include: { Category: true } },
+            User: true,
+            imageContent: true,
+            imagePreview: true,
+          },
+        },
+      },
     });
 
     res.json({ data: items });

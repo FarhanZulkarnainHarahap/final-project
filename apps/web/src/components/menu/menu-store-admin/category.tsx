@@ -17,9 +17,12 @@ export default function AdminStoreCategoryPage() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const res = await axios.get("http://localhost:8000/api/v1/categories", {
-          withCredentials: true,
-        });
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/categories`,
+          {
+            withCredentials: true,
+          }
+        );
         setCategories(res.data.data);
       } catch (err) {
         console.error("Error fetching categories:", err);

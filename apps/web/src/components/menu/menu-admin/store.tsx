@@ -46,7 +46,7 @@ export default function StoreList() {
   const fetchStores = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8000/api/v1/stores/super-admin",
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/stores/super-admin`,
         {
           method: "GET",
           headers: {
@@ -84,8 +84,9 @@ export default function StoreList() {
     if (!editingStore) return;
 
     try {
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
       const response = await fetch(
-        `http://localhost:8000/api/v1/stores/super-admin/${editingStore.id}`,
+        `${baseUrl}/api/v1/stores/super-admin/${editingStore.id}`,
         {
           method: "PUT",
           headers: {
@@ -118,8 +119,9 @@ export default function StoreList() {
 
   const handleDelete = async (storeId: string) => {
     try {
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
       const response = await fetch(
-        `http://localhost:8000/api/v1/stores/super-admin/${storeId}`,
+        `${baseUrl}/api/v1/stores/super-admin/${storeId}`,
         {
           method: "DELETE",
           headers: {

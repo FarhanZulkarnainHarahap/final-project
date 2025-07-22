@@ -22,7 +22,7 @@ export default function CategoryPageSection() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const res = await axios.get("http://localhost:8000/api/v1/categories", {
+        const res = await axios.get`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/categories`, {
           withCredentials: true,
         });
         setCategories(res.data.data);
@@ -41,7 +41,7 @@ export default function CategoryPageSection() {
     e.preventDefault();
     try {
       const res = await axios.post(
-        "http://localhost:8000/api/v1/categories",
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/categories`,
         {
           name,
           description,
@@ -55,7 +55,7 @@ export default function CategoryPageSection() {
 
       // Fetch updated categories
       const categoriesRes = await axios.get(
-        "http://localhost:8000/api/v1/categories",
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/categories`,
         {
           withCredentials: true,
         }
@@ -69,7 +69,8 @@ export default function CategoryPageSection() {
 
   const handleDeleteCategory = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:8000/api/v1/categories/${id}`, {
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+      await axios.delete(`${baseUrl}/api/v1/categories/${id}`, {
         withCredentials: true,
       });
 

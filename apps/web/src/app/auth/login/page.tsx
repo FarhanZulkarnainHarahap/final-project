@@ -17,12 +17,15 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(loginData),
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(loginData),
+          credentials: "include",
+        }
+      );
 
       if (!res.ok) throw new Error("Login gagal");
 
@@ -126,7 +129,7 @@ export default function LoginPage() {
 
         <div className="flex justify-center gap-4">
           <Link
-            href="http://localhost:8000/api/v1/auth/google"
+            href={`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/google`}
             className="bg-white p-2 rounded-full hover:shadow-md transition"
           >
             <FcGoogle size={24} />

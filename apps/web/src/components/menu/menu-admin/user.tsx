@@ -55,8 +55,8 @@ export default function UserPage() {
         sortBy: "createdAt",
         sortOrder: sortOrder,
       });
-
-      const res = await fetch(`http://localhost:8000/api/v1/user?${params}`);
+      const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+      const res = await fetch(`${baseUrl}/api/v1/user?${params}`);
       const data: ApiResponse = await res.json();
 
       if (data && data.data) {

@@ -29,7 +29,7 @@ export default function MenuNavbarAdmin({
     async function getAllUser() {
       try {
         const res = await fetch(
-          "http://localhost:8000/api/v1/user/current-user",
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/user/current-user`,
           {
             credentials: "include",
           }

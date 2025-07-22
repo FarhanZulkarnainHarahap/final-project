@@ -19,8 +19,9 @@ export default function ProductCatalogId({
     async function getProduct() {
       try {
         const { productId } = await params;
+        const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
         const res = await fetch(
-          `http://localhost:8000/api/v1/products/${productId}`, //env domain/api....
+          `${baseUrl}/api/v1/products/${productId}`, //env domain/api....
           {
             credentials: "include",
           }
@@ -38,12 +39,10 @@ export default function ProductCatalogId({
     async function getProduct() {
       try {
         const { productId } = await params;
-        const res = await fetch(
-          `http://localhost:8000/api/v1/products/${productId}`,
-          {
-            credentials: "include",
-          }
-        );
+        const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
+        const res = await fetch(`${baseUrl}/api/v1/products/${productId}`, {
+          credentials: "include",
+        });
         const data = await res.json();
         setProducts(data?.data);
         console.log(data.data);

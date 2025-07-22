@@ -30,7 +30,9 @@ export default function ProductStorePage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/v1/categories");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/categories`
+        );
         const json = await res.json();
         setCategories(json.data || []);
       } catch (error) {
@@ -51,9 +53,9 @@ export default function ProductStorePage() {
         params.set("page", String(page));
         params.set("pageSize", "8");
         if (category) params.set("category", category);
-
+        const baseUrl = process.env.NEXT_PUBLIC_DOMAIN;
         const res = await fetch(
-          `http://localhost:8000/api/v1/store-products/${storeId}/products?${params}`,
+          `${baseUrl}/api/v1/store-products/${storeId}/products?${params}`,
           { cache: "no-store" }
         );
         const json = await res.json();
